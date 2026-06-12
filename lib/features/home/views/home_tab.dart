@@ -19,6 +19,13 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 
   final List<String> _levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Chào buổi sáng,';
+    if (hour < 18) return 'Chào buổi chiều,';
+    return 'Chào buổi tối,';
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user;
@@ -59,10 +66,15 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                     side: const BorderSide(color: AppColors.border, width: 1),
                   ),
                   color: AppColors.surface,
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 18,
-                    backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/150?img=11',
+                    backgroundColor: AppColors.tertiary,
+                    child: Text(
+                      user?.initials ?? '?',
+                      style: AppTextStyles.bodyText.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   itemBuilder: (context) => [
@@ -159,7 +171,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Good Morning,',
+                            _getGreeting(),
                             style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.textSecondary,
                             ),

@@ -16,6 +16,15 @@ class AppTextStyles {
         color: AppColors.textPrimary,
       );
 
+  // Aliases cho tiện gõ
+  static TextStyle get h1 => heading1;
+  static TextStyle get h2 => heading2;
+  static TextStyle get h3 => GoogleFonts.inter(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      );
+
   static TextStyle get bodyText => GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w400,
@@ -27,6 +36,8 @@ class AppTextStyles {
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
       );
+      
+  static TextStyle get bodySmall => caption;
 
   static TextStyle get buttonText => GoogleFonts.inter(
         fontSize: 16,

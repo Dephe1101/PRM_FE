@@ -33,6 +33,11 @@ class ApiErrorHandler {
             code: 'NETWORK_ERROR',
             message: 'Không có kết nối mạng',
           );
+        case DioExceptionType.cancel:
+          return const AppException(
+            code: 'CANCELLED',
+            message: 'Yêu cầu đã bị huỷ',
+          );
         default:
           return const AppException(
             code: ErrorCodes.internalError,

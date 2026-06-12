@@ -14,6 +14,8 @@ _UserModel _$UserModelFromJson(Map<String, dynamic> json) => _UserModel(
   level: (json['level'] as num?)?.toInt() ?? 1,
   xp: (json['xp'] as num?)?.toInt() ?? 0,
   coins: (json['coins'] as num?)?.toInt() ?? 0,
+  isActive: json['isActive'] as bool? ?? true,
+  createdAt: json['createdAt'] as String?,
 );
 
 Map<String, dynamic> _$UserModelToJson(_UserModel instance) =>
@@ -25,4 +27,6 @@ Map<String, dynamic> _$UserModelToJson(_UserModel instance) =>
       'level': instance.level,
       'xp': instance.xp,
       'coins': instance.coins,
+      'isActive': instance.isActive,
+      'createdAt': instance.createdAt,
     };
