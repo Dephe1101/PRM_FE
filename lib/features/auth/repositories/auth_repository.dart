@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile/core/network/cookie_manager_setup.dart';
 import 'package:mobile/core/exceptions/app_exception.dart';
 import 'package:mobile/core/network/api_error_handler.dart';
 import 'package:mobile/core/network/dio_client.dart';
@@ -11,15 +12,15 @@ import 'package:mobile/features/auth/models/session_model.dart';
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
     ref.watch(authRemoteDataSourceProvider),
-    ref.watch(secureStorageProvider),
+    ref.watch(sharedPreferencesProvider),
   );
 });
 
 class AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
-  final FlutterSecureStorage _secureStorage;
+  final SharedPreferences _prefs;
 
-  AuthRepository(this._remoteDataSource, this._secureStorage);
+  AuthRepository(this._remoteDataSource, this._prefs);
 
   Future<Either<Failure, UserModel>> register({
     required String username,
@@ -33,7 +34,7 @@ class AuthRepository {
         password: password,
       );
       final user = UserModel.fromJson(data['user']);
-      await _secureStorage.write(key: 'accessToken', value: data['accessToken']);
+      await _prefs.setString('accessToken', data['accessToken']);
       return right(user);
     } catch (e) {
       return left(Failure.fromException(ApiErrorHandler.handle(e)));
@@ -50,7 +51,7 @@ class AuthRepository {
         password: password,
       );
       final user = UserModel.fromJson(data['user']);
-      await _secureStorage.write(key: 'accessToken', value: data['accessToken']);
+      await _prefs.setString('accessToken', data['accessToken']);
       return right(user);
     } catch (e) {
       return left(Failure.fromException(ApiErrorHandler.handle(e)));
@@ -60,7 +61,8 @@ class AuthRepository {
   Future<Either<Failure, void>> logout() async {
     try {
       await _remoteDataSource.logout();
-      await _secureStorage.delete(key: 'accessToken');
+      await _prefs.remove('accessToken');
+      await CookieManagerSetup.clearCookies();
       return right(null);
     } catch (e) {
       return left(Failure.fromException(ApiErrorHandler.handle(e)));
@@ -70,7 +72,8 @@ class AuthRepository {
   Future<Either<Failure, void>> logoutAll() async {
     try {
       await _remoteDataSource.logoutAll();
-      await _secureStorage.delete(key: 'accessToken');
+      await _prefs.remove('accessToken');
+      await CookieManagerSetup.clearCookies();
       return right(null);
     } catch (e) {
       return left(Failure.fromException(ApiErrorHandler.handle(e)));

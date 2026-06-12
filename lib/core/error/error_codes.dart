@@ -8,6 +8,7 @@ class ErrorCodes {
 
   // ===== User =====
   static const String userNotFound = 'USER_NOT_FOUND';
+  static const String accountDisabled = 'ACCOUNT_DISABLED';
 
   // ===== Level =====
   static const String levelNotFound = 'LEVEL_NOT_FOUND';

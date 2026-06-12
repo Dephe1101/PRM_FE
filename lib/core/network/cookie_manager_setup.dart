@@ -16,5 +16,9 @@ class CookieManagerSetup {
     );
     cookieManager = CookieManager(cookieJar);
   }
+
+  static Future<void> clearCookies() async {
+    await cookieJar.deleteAll();
+  }
 }
 
