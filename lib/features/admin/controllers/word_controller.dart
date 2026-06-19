@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/features/auth/controllers/auth_controller.dart';
 import 'package:mobile/core/network/api_error_handler.dart';
 import 'package:mobile/features/admin/models/word_model.dart';
 import 'package:mobile/core/models/paginated_response.dart';
@@ -72,10 +72,7 @@ class WordFilterNotifier extends Notifier<WordFilterState> {
 
 // Word Controller
 final wordControllerProvider =
-    AsyncNotifierProvider.autoDispose<
-      WordController,
-      PaginatedResponse<WordModel>
-    >(() {
+    AsyncNotifierProvider<WordController, PaginatedResponse<WordModel>>(() {
       return WordController();
     });
 
@@ -83,8 +80,13 @@ class WordController extends AsyncNotifier<PaginatedResponse<WordModel>> {
   WordRepository get _repository => ref.read(wordRepositoryProvider);
 
   @override
-  FutureOr<PaginatedResponse<WordModel>> build() async {
-    final filter = ref.watch(wordFilterProvider);
+  Future<PaginatedResponse<WordModel>> build() async {
+    ref.listen(authControllerProvider, (previous, next) {
+      if (previous?.isLoggedIn == true && next.isLoggedIn == false) {
+        ref.invalidateSelf();
+      }
+    });
+    final filter = ref.read(wordFilterProvider);
     return _fetchWords(
       levelId: filter.levelId,
       topicId: filter.topicId,

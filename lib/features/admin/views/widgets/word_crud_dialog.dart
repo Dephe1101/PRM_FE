@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/utils/toast_util.dart';
@@ -6,8 +7,9 @@ import 'package:mobile/features/admin/models/word_model.dart';
 import 'package:mobile/core/exceptions/app_exception.dart';
 import 'package:mobile/core/validators/word_validator.dart';
 import 'package:mobile/core/widgets/primary_button.dart';
+import 'package:mobile/features/admin/repositories/topic_repository.dart';
 
-class WordCrudDialog extends StatefulWidget {
+class WordCrudDialog extends ConsumerStatefulWidget {
   final WordModel? initialData;
   final List<dynamic>? topics;
   final List<dynamic>? levels;
@@ -24,10 +26,10 @@ class WordCrudDialog extends StatefulWidget {
   });
 
   @override
-  State<WordCrudDialog> createState() => _WordCrudDialogState();
+  ConsumerState<WordCrudDialog> createState() => _WordCrudDialogState();
 }
 
-class _WordCrudDialogState extends State<WordCrudDialog> {
+class _WordCrudDialogState extends ConsumerState<WordCrudDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
 
@@ -39,6 +41,7 @@ class _WordCrudDialogState extends State<WordCrudDialog> {
   late TextEditingController _meaningController;
   late TextEditingController _exampleController;
   late TextEditingController _audioUrlController;
+  List<dynamic> _currentTopics = [];
 
   @override
   void initState() {
@@ -62,17 +65,7 @@ class _WordCrudDialogState extends State<WordCrudDialog> {
       _levelId = widget.levels!.first.id;
     }
 
-    if (widget.topics != null &&
-        widget.topics!.isNotEmpty &&
-        _topicId.isEmpty) {
-      final filteredTopics = widget.topics!
-          .cast<dynamic>()
-          .where((t) => t.levelId == _levelId)
-          .toList();
-      if (filteredTopics.isNotEmpty) {
-        _topicId = filteredTopics.first.id;
-      }
-    }
+    _fetchTopics();
 
     _kanjiController = TextEditingController(
       text: widget.initialData?.kanji ?? '',
@@ -92,6 +85,29 @@ class _WordCrudDialogState extends State<WordCrudDialog> {
     _audioUrlController = TextEditingController(
       text: widget.initialData?.audioUrl ?? '',
     );
+  }
+
+  Future<void> _fetchTopics() async {
+    if (_levelId.isEmpty) return;
+    try {
+      final topics = await ref
+          .read(topicRepositoryProvider)
+          .getTopicsByLevel(_levelId);
+      if (mounted) {
+        setState(() {
+          _currentTopics = topics;
+          // Verify if current _topicId exists in new topics
+          if (_topicId.isEmpty ||
+              !_currentTopics.any((t) => t.id == _topicId)) {
+            _topicId = _currentTopics.isNotEmpty ? _currentTopics.first.id : '';
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastUtil.showSnackBar(context, 'Lỗi tải chủ đề', isError: true);
+      }
+    }
   }
 
   @override
@@ -264,17 +280,8 @@ class _WordCrudDialogState extends State<WordCrudDialog> {
                                 if (val != null) {
                                   setState(() {
                                     _levelId = val;
-                                    // Reset topic to the first of the new level
-                                    final filtered = widget.topics!
-                                        .cast<dynamic>()
-                                        .where((t) => t.levelId == _levelId)
-                                        .toList();
-                                    if (filtered.isNotEmpty) {
-                                      _topicId = filtered.first.id;
-                                    } else {
-                                      _topicId = '';
-                                    }
                                   });
+                                  _fetchTopics();
                                 }
                               },
                             ),
@@ -283,103 +290,94 @@ class _WordCrudDialogState extends State<WordCrudDialog> {
                   ),
 
                 // Topic ID
-                if (widget.topics != null && widget.topics!.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Topic',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Topic',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 8),
-                      isEditing
-                          ? Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
+                    ),
+                    const SizedBox(height: 8),
+                    isEditing
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _currentTopics.isNotEmpty
+                                  ? _currentTopics
+                                        .firstWhere(
+                                          (t) => t.id == _topicId,
+                                          orElse: () => _currentTopics.first,
+                                        )
+                                        .title
+                                  : 'Đang tải...',
+                              style: AppTextStyles.bodyText.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
+                        : DropdownButtonFormField<String>(
+                            key: ValueKey(_topicId),
+                            initialValue:
+                                _topicId.isNotEmpty &&
+                                    _currentTopics.any((t) => t.id == _topicId)
+                                ? _topicId
+                                : null,
+                            isExpanded: true,
+                            itemHeight: null,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppColors.background,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 14,
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.background,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                widget.topics!
-                                    .cast<dynamic>()
-                                    .firstWhere(
-                                      (t) => t.id == _topicId,
-                                      orElse: () => widget.topics!.first,
-                                    )
-                                    .title,
-                                style: AppTextStyles.bodyText.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            )
-                          : () {
-                              final filteredTopics = widget.topics!
-                                  .cast<dynamic>()
-                                  .where((t) => t.levelId == _levelId)
-                                  .toList();
-
-                              return DropdownButtonFormField<String>(
-                                key: ValueKey(_topicId),
-                                initialValue:
-                                    _topicId.isNotEmpty &&
-                                        filteredTopics.any(
-                                          (t) => t.id == _topicId,
-                                        )
-                                    ? _topicId
-                                    : null,
-                                isExpanded: true,
-                                itemHeight: null,
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: AppColors.background,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
+                            ),
+                            selectedItemBuilder: (context) {
+                              return _currentTopics.map((t) {
+                                return Text(
+                                  t.title,
+                                  softWrap: true,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                );
+                              }).toList();
+                            },
+                            items: _currentTopics.map((t) {
+                              return DropdownMenuItem<String>(
+                                value: t.id,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8.0,
                                   ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
+                                  child: Text(t.title, softWrap: true),
                                 ),
-                                selectedItemBuilder: (context) {
-                                  return filteredTopics.map((t) {
-                                    return Text(
-                                      t.title,
-                                      softWrap: true,
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    );
-                                  }).toList();
-                                },
-                                items: filteredTopics.map((t) {
-                                  return DropdownMenuItem<String>(
-                                    value: t.id,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0,
-                                      ),
-                                      child: Text(t.title, softWrap: true),
-                                    ),
-                                  );
-                                }).toList(),
-                                validator: WordValidator.validateTopic,
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() => _topicId = val);
-                                  }
-                                },
                               );
-                            }(),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                            }).toList(),
+                            validator: WordValidator.validateTopic,
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _topicId = val);
+                              }
+                            },
+                          ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
 
                 _buildTextField('Kanji (tùy chọn)', _kanjiController),
                 const SizedBox(height: 16),

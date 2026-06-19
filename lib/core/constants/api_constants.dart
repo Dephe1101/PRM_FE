@@ -22,4 +22,6 @@ class ApiConstants {
   // User Endpoints
   static const String users = '/users';
   static String userStatus(String id) => '/users/$id/status';
+  // Flashcards Endpoints
+  static const String flashcards = '/flashcards';
 }

@@ -10,6 +10,7 @@ import 'package:mobile/features/admin/views/widgets/topic_crud_dialog.dart';
 import 'package:mobile/features/admin/views/widgets/topic_import_dialog.dart';
 import 'package:mobile/features/admin/views/widgets/topic_detail_dialog.dart';
 import 'package:mobile/core/services/excel_service.dart';
+import 'package:mobile/core/widgets/error_retry_widget.dart';
 
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
@@ -264,9 +265,12 @@ class TopicsTab extends ConsumerWidget {
                 _buildChip(
                   label: 'All Levels',
                   isActive: selectedLevelId == null,
-                  onTap: () => ref
-                      .read(selectedLevelFilterProvider.notifier)
-                      .setFilter(null),
+                  onTap: () {
+                    ref
+                        .read(selectedLevelFilterProvider.notifier)
+                        .setFilter(null);
+                    ref.invalidate(topicControllerProvider);
+                  },
                 ),
                 ...levelsState.maybeWhen(
                   data: (levels) => levels
@@ -276,9 +280,12 @@ class TopicsTab extends ConsumerWidget {
                           child: _buildChip(
                             label: level.name,
                             isActive: selectedLevelId == level.id,
-                            onTap: () => ref
-                                .read(selectedLevelFilterProvider.notifier)
-                                .setFilter(level.id),
+                            onTap: () {
+                              ref
+                                  .read(selectedLevelFilterProvider.notifier)
+                                  .setFilter(level.id);
+                              ref.invalidate(topicControllerProvider);
+                            },
                           ),
                         ),
                       )
@@ -334,7 +341,12 @@ class TopicsTab extends ConsumerWidget {
               return widgets;
             },
             loading: () => [const SizedBox.shrink()],
-            error: (e, _) => [Center(child: Text('Error: $e'))],
+            error: (e, _) => [
+              ErrorRetryWidget(
+                errorMessage: 'Lỗi tải chủ đề: $e',
+                onRetry: () => ref.invalidate(topicControllerProvider),
+              )
+            ],
           ),
         ],
       ),
