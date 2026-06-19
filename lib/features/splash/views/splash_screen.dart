@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../auth/controllers/auth_controller.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -39,6 +41,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final hasError = authState.errorMessage != null && !authState.isLoading;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -105,12 +110,39 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
             const Spacer(),
-            // Custom Loading Indicator
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              strokeWidth: 3,
-            ),
-            const SizedBox(height: 48),
+            if (hasError) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  authState.errorMessage!,
+                  style: AppTextStyles.bodyText.copyWith(color: AppColors.error),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(authControllerProvider.notifier).getMe();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Thử lại'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ] else ...[
+              // Custom Loading Indicator
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                strokeWidth: 3,
+              ),
+              const SizedBox(height: 48),
+            ],
           ],
         ),
       ),

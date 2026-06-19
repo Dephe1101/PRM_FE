@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:mobile/core/error/error_codes.dart';
 import 'package:mobile/features/auth/models/user_model.dart';
 import 'package:mobile/features/auth/models/session_model.dart';
 import 'package:mobile/features/auth/repositories/auth_repository.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mobile/core/exceptions/app_exception.dart';
 
 part 'auth_controller.freezed.dart';
 
@@ -62,11 +65,28 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> getMe() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    final result = await _repository.getMe();
+    
+    // Đảm bảo Splash Screen hiển thị ít nhất 1.5s để chạy hết animation
+    final results = await Future.wait([
+      _repository.getMe(),
+      Future.delayed(const Duration(milliseconds: 1500)),
+    ]);
+
+    final result = results[0] as Either<Failure, UserModel>;
 
     result.fold(
       (failure) {
-        state = const AuthState();
+        // Nếu lỗi do hết hạn token hoặc không có quyền -> Đăng xuất
+        final isAuthError = failure.code == ErrorCodes.unauthorized || 
+                            failure.code == ErrorCodes.tokenExpired ||
+                            failure.code == ErrorCodes.accountDisabled;
+        
+        state = state.copyWith(
+          isLoading: false,
+          isLoggedIn: false,
+          user: null,
+          errorMessage: isAuthError ? null : failure.message,
+        );
       },
       (user) {
         state = state.copyWith(isLoading: false, isLoggedIn: true, user: user);

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'home_tab.dart';
+import 'package:mobile/features/learning/views/study_tab.dart';
+import 'package:mobile/core/widgets/lazy_indexed_stack.dart';
+
+import 'package:mobile/features/learning/views/progress_tab.dart';
+import 'package:mobile/features/gamification/views/game_tab.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -14,19 +19,16 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   final List<Widget> _tabs = [
     const HomeTab(),
-    const Scaffold(body: Center(child: Text('Study Tab'))),
-    const Scaffold(body: Center(child: Text('Progress Tab'))),
-    const Scaffold(body: Center(child: Text('Settings Tab'))),
+    const StudyTab(),
+    const ProgressTab(),
+    const GameTab(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _tabs,
-      ),
+      body: LazyIndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           boxShadow: [
@@ -34,7 +36,7 @@ class _MainScaffoldState extends State<MainScaffold> {
               color: Color(0x05000000),
               blurRadius: 20,
               offset: Offset(0, -4),
-            )
+            ),
           ],
         ),
         child: BottomNavigationBar(
@@ -68,9 +70,9 @@ class _MainScaffoldState extends State<MainScaffold> {
               label: 'Progress',
             ),
             BottomNavigationBarItem(
-              icon: _buildIcon(Icons.settings_outlined, 3),
-              activeIcon: _buildIcon(Icons.settings, 3),
-              label: 'Settings',
+              icon: _buildIcon(Icons.videogame_asset_outlined, 3),
+              activeIcon: _buildIcon(Icons.videogame_asset, 3),
+              label: 'Game',
             ),
           ],
         ),

@@ -15,7 +15,7 @@ class LoadingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (_shouldShowLoading(options)) {
-      ref.read(globalLoadingProvider.notifier).show();
+      Future.microtask(() => ref.read(globalLoadingProvider.notifier).show());
     }
     super.onRequest(options, handler);
   }
@@ -23,7 +23,7 @@ class LoadingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (_shouldShowLoading(response.requestOptions)) {
-      ref.read(globalLoadingProvider.notifier).hide();
+      Future.microtask(() => ref.read(globalLoadingProvider.notifier).hide());
     }
     super.onResponse(response, handler);
   }
@@ -31,7 +31,7 @@ class LoadingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (_shouldShowLoading(err.requestOptions)) {
-      ref.read(globalLoadingProvider.notifier).hide();
+      Future.microtask(() => ref.read(globalLoadingProvider.notifier).hide());
     }
     super.onError(err, handler);
   }
