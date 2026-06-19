@@ -6,6 +6,7 @@ import 'package:mobile/core/validators/user_validator.dart';
 import 'package:mobile/features/admin/controllers/user_controller.dart';
 import 'package:mobile/features/auth/models/user_model.dart';
 import 'package:mobile/core/utils/debouncer.dart';
+import 'package:mobile/core/widgets/error_retry_widget.dart';
 
 class UsersTab extends ConsumerStatefulWidget {
   const UsersTab({super.key});
@@ -235,31 +236,9 @@ class _UsersTabState extends ConsumerState<UsersTab> {
         Expanded(
           child: usersState.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: AppColors.error,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    error.toString(),
-                    style: AppTextStyles.bodyText.copyWith(
-                      color: AppColors.error,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () =>
-                        ref.read(userControllerProvider.notifier).refresh(),
-                    child: const Text('Thử lại'),
-                  ),
-                ],
-              ),
+            error: (error, _) => ErrorRetryWidget(
+              errorMessage: error.toString(),
+              onRetry: () => ref.read(userControllerProvider.notifier).refresh(),
             ),
             data: (users) {
               if (users.isEmpty) {
@@ -359,7 +338,7 @@ class _UsersTabState extends ConsumerState<UsersTab> {
           // Avatar
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppColors.surfacePink,
+            backgroundColor: AppColors.primary,
             child: Text(
               user.initials,
               style: AppTextStyles.bodyText.copyWith(

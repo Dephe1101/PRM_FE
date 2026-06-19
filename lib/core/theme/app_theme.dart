@@ -32,7 +32,9 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 4, // Bóng mềm
-        shadowColor: Colors.black.withValues(alpha: 0.05), // Đổ bóng nhẹ chuẩn Zen
+        shadowColor: Colors.black.withValues(
+          alpha: 0.05,
+        ), // Đổ bóng nhẹ chuẩn Zen
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20), // Bo tròn
         ),
@@ -58,7 +60,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.border, width: 1),
@@ -75,8 +80,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.error, width: 1),
         ),
-        labelStyle: AppTextStyles.bodyText.copyWith(color: AppColors.textSecondary),
-        hintStyle: AppTextStyles.bodyText.copyWith(color: AppColors.textSecondary),
+        labelStyle: AppTextStyles.bodyText.copyWith(
+          color: AppColors.textSecondary,
+        ),
+        hintStyle: AppTextStyles.bodyText.copyWith(
+          color: AppColors.textSecondary,
+        ),
       ),
     );
   }

@@ -11,6 +11,14 @@ import 'package:mobile/features/home/views/main_scaffold.dart';
 import 'package:mobile/features/splash/views/splash_screen.dart';
 import 'package:mobile/features/admin/views/main_admin_scaffold.dart';
 import 'package:mobile/core/widgets/placeholder_screen.dart';
+import 'package:mobile/features/learning/views/topic_detail_screen.dart';
+import 'package:mobile/features/flashcard/views/topic_flashcard_screen.dart';
+
+import 'package:mobile/features/flashcard/views/my_words_screen.dart';
+import 'package:mobile/features/gamification/views/falling_word_game_screen.dart';
+import 'package:mobile/features/gamification/views/leaderboard_screen.dart';
+import 'package:mobile/features/gamification/views/game_history_screen.dart';
+import 'package:mobile/features/gamification/views/game_stats_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -107,18 +115,54 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: RouteConstants.topicDetail,
+        builder: (context, state) {
+          final topicId = state.pathParameters['topicId']!;
+          return TopicDetailScreen(topicId: topicId);
+        },
+      ),
+      GoRoute(
         path: RouteConstants.flashcard,
-        builder: (context, state) => PlaceholderScreen(
-          title: 'Flashcard',
-          message: 'Flashcard Screen Stub: ${state.pathParameters['topicId']}',
-        ),
+        builder: (context, state) {
+          final topicId = state.pathParameters['topicId']!;
+          // Giả sử có query parameter cho topicName để hiển thị trên AppBar
+          final topicName =
+              state.uri.queryParameters['topicName'] ?? 'Flashcard';
+          return TopicFlashcardScreen(topicId: topicId, topicName: topicName);
+        },
+      ),
+
+      GoRoute(
+        path: RouteConstants.myWords,
+        builder: (context, state) => const MyWordsScreen(),
       ),
       GoRoute(
         path: RouteConstants.game,
-        builder: (context, state) => const PlaceholderScreen(
-          title: 'Game',
-          message: 'Game Screen Stub',
-        ),
+        builder: (context, state) =>
+            const PlaceholderScreen(title: 'Game', message: 'Game Screen Stub'),
+      ),
+      GoRoute(
+        path: RouteConstants.fallingWord,
+        builder: (context, state) {
+          final topicIdsStr = state.uri.queryParameters['topicIds'] ?? '';
+          final topicIds = topicIdsStr
+              .split(',')
+              .where((id) => id.isNotEmpty)
+              .toList();
+          return FallingWordGameScreen(topicIds: topicIds);
+        },
+      ),
+      GoRoute(
+        path: RouteConstants.leaderboard,
+        builder: (context, state) => const LeaderboardScreen(),
+      ),
+      GoRoute(
+        path: RouteConstants.gameHistory,
+        builder: (context, state) => const GameHistoryScreen(),
+      ),
+      GoRoute(
+        path: RouteConstants.gameStats,
+        builder: (context, state) => const GameStatsScreen(),
       ),
       // --- Admin Routes ---
       GoRoute(
@@ -134,15 +178,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
   RouterNotifier(this._ref) {
-    _ref.listen<AuthState>(
-      authControllerProvider,
-      (previous, next) {
-        if (previous?.isLoading == true && next.isLoading == false) {
-          notifyListeners();
-        } else if (previous?.isLoggedIn != next.isLoggedIn) {
-          notifyListeners();
-        }
-      },
-    );
+    _ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (previous?.isLoading == true && next.isLoading == false) {
+        notifyListeners();
+      } else if (previous?.isLoggedIn != next.isLoggedIn) {
+        notifyListeners();
+      }
+    });
   }
 }

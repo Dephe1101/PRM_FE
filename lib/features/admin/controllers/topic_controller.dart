@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/features/auth/controllers/auth_controller.dart';
 import 'package:mobile/core/network/api_error_handler.dart';
 import 'package:mobile/features/admin/models/topic_model.dart';
 import 'package:mobile/features/admin/repositories/topic_repository.dart';
@@ -7,7 +8,7 @@ import 'package:mobile/features/admin/repositories/topic_repository.dart';
 import 'package:mobile/features/admin/views/topics_tab.dart'; // for selectedLevelFilterProvider
 
 final topicControllerProvider =
-    AsyncNotifierProvider.autoDispose<TopicController, List<TopicModel>>(() {
+    AsyncNotifierProvider<TopicController, List<TopicModel>>(() {
       return TopicController();
     });
 
@@ -16,7 +17,12 @@ class TopicController extends AsyncNotifier<List<TopicModel>> {
 
   @override
   FutureOr<List<TopicModel>> build() async {
-    final levelId = ref.watch(selectedLevelFilterProvider);
+    ref.listen(authControllerProvider, (previous, next) {
+      if (previous?.isLoggedIn == true && next.isLoggedIn == false) {
+        ref.invalidateSelf();
+      }
+    });
+    final levelId = ref.read(selectedLevelFilterProvider);
     return _fetchTopics(levelId);
   }
 

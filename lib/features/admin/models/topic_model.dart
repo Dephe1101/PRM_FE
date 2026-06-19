@@ -4,13 +4,19 @@ class TopicModel {
   final dynamic levelIdRaw;
   final int orderIndex;
   final int totalWords;
+  final String? status;
+  final int masteredWords;
+  final int learnedWords;
 
   TopicModel({
     required this.id,
     required this.title,
-    required this.levelIdRaw,
+    this.levelIdRaw, // Make this optional to support progress API
     required this.orderIndex,
     this.totalWords = 0,
+    this.status,
+    this.masteredWords = 0,
+    this.learnedWords = 0,
   });
 
   // Helpers to get levelId string or name depending on populated or not
@@ -35,6 +41,9 @@ class TopicModel {
       levelIdRaw: json['levelId'],
       orderIndex: json['orderIndex'] ?? 0,
       totalWords: json['totalWords'] ?? 0,
+      status: json['status'],
+      masteredWords: json['masteredWords'] ?? 0,
+      learnedWords: json['learnedWords'] ?? 0,
     );
   }
 
@@ -45,6 +54,9 @@ class TopicModel {
       'levelId': levelIdRaw,
       'orderIndex': orderIndex,
       'totalWords': totalWords,
+      'status': status,
+      'masteredWords': masteredWords,
+      'learnedWords': learnedWords,
     };
   }
 }

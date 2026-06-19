@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/features/auth/controllers/auth_controller.dart';
 import 'package:mobile/features/admin/models/level_model.dart';
 import 'package:mobile/features/admin/repositories/level_repository.dart';
 
 final levelControllerProvider =
-    AsyncNotifierProvider.autoDispose<LevelController, List<LevelModel>>(() {
+    AsyncNotifierProvider<LevelController, List<LevelModel>>(() {
       return LevelController();
     });
 
@@ -12,6 +13,11 @@ class LevelController extends AsyncNotifier<List<LevelModel>> {
 
   @override
   Future<List<LevelModel>> build() async {
+    ref.listen(authControllerProvider, (previous, next) {
+      if (previous?.isLoggedIn == true && next.isLoggedIn == false) {
+        ref.invalidateSelf();
+      }
+    });
     _repository = ref.read(levelRepositoryProvider);
     return _fetchLevels();
   }

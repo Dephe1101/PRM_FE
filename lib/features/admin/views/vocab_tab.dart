@@ -11,6 +11,7 @@ import 'package:mobile/features/admin/models/word_model.dart';
 import 'package:mobile/features/admin/views/widgets/word_crud_dialog.dart';
 import 'package:mobile/features/admin/views/widgets/word_detail_dialog.dart';
 import 'package:mobile/core/exceptions/app_exception.dart';
+import 'package:mobile/core/widgets/error_retry_widget.dart';
 
 import 'package:mobile/core/utils/debouncer.dart';
 
@@ -35,7 +36,7 @@ class _VocabTabState extends ConsumerState<VocabTab> {
   void _onSearch(String query) {
     _debouncer.run(() {
       ref.read(wordFilterProvider.notifier).setSearch(query.trim());
-      ref.read(wordControllerProvider.notifier).refresh();
+      ref.invalidate(wordControllerProvider);
     });
   }
 
@@ -217,6 +218,8 @@ class _VocabTabState extends ConsumerState<VocabTab> {
                             .read(selectedLevelFilterProvider.notifier)
                             .setFilter(value);
                         ref.read(wordFilterProvider.notifier).setLevel(value);
+                        ref.invalidate(topicControllerProvider);
+                        ref.invalidate(wordControllerProvider);
                       },
                     ),
                   ),
@@ -258,6 +261,7 @@ class _VocabTabState extends ConsumerState<VocabTab> {
                       ],
                       onChanged: (value) {
                         ref.read(wordFilterProvider.notifier).setTopic(value);
+                        ref.invalidate(wordControllerProvider);
                       },
                     ),
                   ),
@@ -298,6 +302,7 @@ class _VocabTabState extends ConsumerState<VocabTab> {
                   totalPages: paginatedResponse.totalPages,
                   onPageChanged: (page) {
                     ref.read(wordFilterProvider.notifier).setPage(page);
+                    ref.invalidate(wordControllerProvider);
                   },
                 ),
               );
@@ -306,7 +311,12 @@ class _VocabTabState extends ConsumerState<VocabTab> {
               return widgets;
             },
             loading: () => [const Center(child: CircularProgressIndicator())],
-            error: (e, _) => [Center(child: Text('Error: $e'))],
+            error: (e, _) => [
+              ErrorRetryWidget(
+                errorMessage: 'Lỗi tải từ vựng: $e',
+                onRetry: () => ref.invalidate(wordControllerProvider),
+              ),
+            ],
           ),
         ],
       ),

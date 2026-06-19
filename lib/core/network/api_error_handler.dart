@@ -4,6 +4,10 @@ import 'package:mobile/core/exceptions/app_exception.dart';
 
 class ApiErrorHandler {
   static AppException handle(dynamic error) {
+    print('ApiErrorHandler caught: $error');
+    if (error is Error) {
+      print('Stacktrace: ${error.stackTrace}');
+    }
     if (error is DioException) {
       if (error.response != null && error.response?.data != null) {
         final data = error.response?.data;
@@ -46,9 +50,9 @@ class ApiErrorHandler {
       }
     }
     
-    return const AppException(
+    return AppException(
       code: ErrorCodes.internalError,
-      message: 'Lỗi không xác định',
+      message: 'Lỗi không xác định: \${error.toString()}',
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:mobile/features/admin/controllers/level_controller.dart';
 import 'package:mobile/features/admin/models/level_model.dart';
 import 'package:mobile/features/admin/views/widgets/level_crud_dialog.dart';
 import 'package:mobile/features/admin/views/widgets/level_detail_dialog.dart';
+import 'package:mobile/core/widgets/error_retry_widget.dart';
 
 class LevelsTab extends ConsumerWidget {
   const LevelsTab({super.key});
@@ -133,11 +134,9 @@ class LevelsTab extends ConsumerWidget {
           );
         },
         loading: () => const SizedBox.shrink(),
-        error: (err, stack) => Center(
-          child: Text(
-            'Error loading levels: $err',
-            style: AppTextStyles.bodyText.copyWith(color: AppColors.error),
-          ),
+        error: (err, stack) => ErrorRetryWidget(
+          errorMessage: 'Lỗi tải cấp độ: $err',
+          onRetry: () => ref.invalidate(levelControllerProvider),
         ),
       ),
     );

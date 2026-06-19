@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/features/auth/controllers/auth_controller.dart';
 import 'package:mobile/features/auth/models/user_model.dart';
 import 'package:mobile/features/admin/repositories/user_repository.dart';
 
 final userControllerProvider =
-    AsyncNotifierProvider.autoDispose<UserController, List<UserModel>>(() {
+    AsyncNotifierProvider<UserController, List<UserModel>>(() {
       return UserController();
     });
 
@@ -13,6 +14,11 @@ class UserController extends AsyncNotifier<List<UserModel>> {
 
   @override
   FutureOr<List<UserModel>> build() async {
+    ref.listen(authControllerProvider, (previous, next) {
+      if (previous?.isLoggedIn == true && next.isLoggedIn == false) {
+        ref.invalidateSelf();
+      }
+    });
     return _fetchUsers();
   }
 
