@@ -81,7 +81,6 @@ class GameFilterController extends Notifier<GameFilterState> {
   }
 
   void toggleTopic(String topicId) {
-
     final currentSelected = List<String>.from(state.selectedTopicIds);
     if (currentSelected.contains(topicId)) {
       currentSelected.remove(topicId);

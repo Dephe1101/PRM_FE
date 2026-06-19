@@ -4,6 +4,7 @@ import 'package:mobile/core/network/dio_client.dart';
 import 'package:mobile/core/network/api_error_handler.dart';
 import 'package:mobile/features/flashcard/models/flashcard_model.dart';
 import 'package:mobile/features/flashcard/models/flashcard_stats_model.dart';
+import 'package:mobile/features/flashcard/models/progress_word_page_model.dart';
 
 final flashcardRepositoryProvider = Provider<FlashcardRepository>((ref) {
   final dio = ref.watch(dioProvider);
@@ -72,6 +73,37 @@ class FlashcardRepository {
         queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
       );
       return FlashcardStatsModel.fromJson(response.data['data']);
+    } catch (e) {
+      throw ApiErrorHandler.handle(e);
+    }
+  }
+
+  /// Fetch paginated word list for progress screen.
+  /// [type]: 'mastered' | 'learning'
+  Future<ProgressWordPageModel> getProgressWords({
+    String? levelId,
+    String? topicId,
+    required String type,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{
+        'type': type,
+        'page': page,
+        'limit': limit,
+      };
+      if (levelId != null && levelId != 'All') queryParameters['levelId'] = levelId;
+      if (topicId != null && topicId != 'All') queryParameters['topicId'] = topicId;
+
+      final response = await _dio.get(
+        '/flashcards/progress',
+        queryParameters: queryParameters,
+      );
+      final data = response.data['data'] as Map<String, dynamic>;
+      // Extract the correct field based on type
+      final key = type == 'mastered' ? 'masteredWords' : 'learningWords';
+      return ProgressWordPageModel.fromJson(data[key] as Map<String, dynamic>? ?? {});
     } catch (e) {
       throw ApiErrorHandler.handle(e);
     }

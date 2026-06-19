@@ -5,6 +5,7 @@ import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/widgets/error_retry_widget.dart';
 import 'package:mobile/features/flashcard/controllers/progress_controller.dart';
 import 'package:mobile/features/flashcard/controllers/progress_filter_controller.dart';
+import 'package:mobile/features/flashcard/models/flashcard_model.dart';
 
 class ProgressTab extends ConsumerWidget {
   const ProgressTab({super.key});
@@ -388,19 +389,21 @@ class ProgressTab extends ConsumerWidget {
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final w = words[index];
+                        // words is List<FlashcardModel>; word data is in w.word
+                        final word = (w is FlashcardModel) ? w.word : w;
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 8,
                             horizontal: 0,
                           ),
                           title: Text(
-                            w.kanji.isNotEmpty ? w.kanji : w.hiragana,
+                            word.kanji.isNotEmpty ? word.kanji : word.hiragana,
                             style: AppTextStyles.bodyText.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           subtitle: Text(
-                            '${w.hiragana} - ${w.meaning}',
+                            '${word.hiragana} - ${word.meaning}',
                             style: AppTextStyles.caption.copyWith(
                               color: AppColors.textSecondary,
                             ),
