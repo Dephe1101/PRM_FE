@@ -6,7 +6,7 @@ import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/widgets/error_retry_widget.dart';
 import 'package:mobile/core/widgets/empty_filter_prompt.dart';
 import 'package:mobile/features/gamification/controllers/game_leaderboard_controller.dart';
-import 'package:mobile/features/gamification/controllers/game_filter_controller.dart';
+import 'package:mobile/features/gamification/controllers/all_topic_filter_controller.dart';
 import 'package:mobile/features/gamification/models/leaderboard_entry_model.dart';
 import 'package:intl/intl.dart';
 
@@ -52,15 +52,25 @@ class LeaderboardScreen extends ConsumerWidget {
                     child: Text('Chưa có dữ liệu xếp hạng'),
                   );
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: entries.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final entry = entries[index];
-                    return _buildLeaderboardItem(entry, index);
-                  },
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  children: [
+                    // Top 3 Podium Chart
+                    if (entries.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildPodium(entries),
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                    ],
+                    // Full list
+                    ...entries.asMap().entries.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildLeaderboardItem(e.value, e.key),
+                      ),
+                    ),
+                  ],
                 );
               },
               loading: () => const SizedBox.shrink(),
@@ -79,8 +89,182 @@ class LeaderboardScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildPodium(List<LeaderboardEntryModel> entries) {
+    final top3 = entries.take(3).toList();
+
+    // Reorder: 2nd, 1st, 3rd (podium visual order)
+    final List<LeaderboardEntryModel?> podiumOrder = [
+      top3.length > 1 ? top3[1] : null, // left: 2nd
+      top3.isNotEmpty ? top3[0] : null,  // center: 1st
+      top3.length > 2 ? top3[2] : null,  // right: 3rd
+    ];
+    final podiumHeights = [100.0, 130.0, 80.0];
+    final podiumColors = [
+      Colors.grey.shade300,
+      const Color(0xFFFFD700),
+      const Color(0xFFCD7F32),
+    ];
+    final rankLabels = ['2', '1', '3'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primary.withValues(alpha: 0.2),
+            AppColors.background,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Top 3 Người Chơi',
+            style: AppTextStyles.h3.copyWith(color: AppColors.brandDark),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (i) {
+              final entry = podiumOrder[i];
+              if (entry == null) return const Expanded(child: SizedBox());
+              return Expanded(
+                child: _buildPodiumItem(
+                  entry: entry,
+                  rank: int.parse(rankLabels[i]),
+                  barHeight: podiumHeights[i],
+                  barColor: podiumColors[i],
+                  isFirst: i == 1,
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPodiumItem({
+    required LeaderboardEntryModel entry,
+    required int rank,
+    required double barHeight,
+    required Color barColor,
+    required bool isFirst,
+  }) {
+    final initials = entry.username.isNotEmpty
+        ? entry.username.substring(0, 1).toUpperCase()
+        : '?';
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Crown for 1st
+        if (isFirst)
+          const Text('👑', style: TextStyle(fontSize: 22))
+        else
+          const SizedBox(height: 28),
+        const SizedBox(height: 4),
+        // Avatar
+        Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            CircleAvatar(
+              radius: isFirst ? 30 : 24,
+              backgroundColor: barColor.withValues(alpha: 0.3),
+              child: Text(
+                initials,
+                style: TextStyle(
+                  color: AppColors.brandDark,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isFirst ? 22 : 18,
+                ),
+              ),
+            ),
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: barColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Center(
+                child: Text(
+                  '$rank',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Name
+        Text(
+          entry.username,
+          style: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        // Score
+        Text(
+          NumberFormat('#,###').format(entry.score),
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.brandDark,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Podium bar
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+          height: barHeight,
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [barColor, barColor.withValues(alpha: 0.6)],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            boxShadow: [
+              BoxShadow(
+                color: barColor.withValues(alpha: 0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              '#$rank',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildFilters(BuildContext context, WidgetRef ref, LeaderboardFilterState filter) {
-    final gameFilterState = ref.watch(gameFilterControllerProvider);
+    final allTopicState = ref.watch(allTopicFilterProvider);
 
     return Container(
       color: AppColors.surface,
@@ -89,8 +273,8 @@ class LeaderboardScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: _buildDropdown<String>(
-              value: gameFilterState.selectedLevelId,
-              items: gameFilterState.levels
+              value: allTopicState.selectedLevelId,
+              items: allTopicState.levels
                   .map((l) => DropdownMenuItem(
                         value: l.id,
                         child: Text(l.name, overflow: TextOverflow.ellipsis),
@@ -98,7 +282,7 @@ class LeaderboardScreen extends ConsumerWidget {
                   .toList(),
               onChanged: (val) {
                 if (val != null) {
-                  ref.read(gameFilterControllerProvider.notifier).setLevel(val);
+                  ref.read(allTopicFilterProvider.notifier).setLevel(val);
                   ref.read(leaderboardFilterProvider.notifier).setTopicIds([]);
                 }
               },
@@ -162,111 +346,120 @@ class LeaderboardScreen extends ConsumerWidget {
   }
 
   void _showTopicBottomSheet(BuildContext context, WidgetRef ref, List<String> currentTopicIds) {
+    final localSelected = List<String>.from(currentTopicIds);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Material(
-          color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Chọn chủ đề (Max 5)', style: AppTextStyles.h2),
-                      Row(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Material(
+              color: AppColors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Consumer(
-                            builder: (context, ref, child) {
-                              return IconButton(
+                          Text('Chọn chủ đề (Max 5)', style: AppTextStyles.h2),
+                          Row(
+                            children: [
+                              IconButton(
                                 onPressed: () {
-                                  ref.read(gameFilterControllerProvider.notifier).clearTopics();
+                                  setModalState(() => localSelected.clear());
                                 },
                                 icon: const Icon(Icons.delete_outline, color: AppColors.error),
                                 tooltip: 'Xóa tất cả',
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(ctx),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(ctx),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: Consumer(
-                    builder: (context, sheetRef, child) {
-                      final filterState = sheetRef.watch(gameFilterControllerProvider);
-                      if (filterState.isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (filterState.error != null) {
-                        return Center(child: Text('Lỗi: \${filterState.error}'));
-                      }
-                      if (filterState.topics.isEmpty) {
-                        return const Center(child: Text('Không có chủ đề nào'));
-                      }
-                      return ListView.builder(
-                        itemCount: filterState.topics.length,
-                        itemBuilder: (context, index) {
-                          final topic = filterState.topics[index];
-                          final isSelected = filterState.selectedTopicIds.contains(topic.id);
-                          final canSelectMore = filterState.selectedTopicIds.length < 5;
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: Consumer(
+                        builder: (context, sheetRef, child) {
+                          final topicState = sheetRef.watch(allTopicFilterProvider);
+                          if (topicState.isLoading) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (topicState.error != null) {
+                            return Center(child: Text('Lỗi: ${topicState.error}'));
+                          }
+                          if (topicState.topics.isEmpty) {
+                            return const Center(child: Text('Không có chủ đề nào'));
+                          }
+                          return ListView.builder(
+                            itemCount: topicState.topics.length,
+                            itemBuilder: (context, index) {
+                              final topic = topicState.topics[index];
+                              final isSelected = localSelected.contains(topic.id);
+                              final canSelectMore = localSelected.length < 5;
 
-                          return CheckboxListTile(
-                            title: Text(topic.title, style: AppTextStyles.bodyText),
-                            value: isSelected,
-                            onChanged: (isSelected || canSelectMore)
-                                ? (bool? value) {
-                                    sheetRef.read(gameFilterControllerProvider.notifier).toggleTopic(topic.id);
-                                  }
-                                : null,
-                            activeColor: AppColors.brandDark,
+                              return CheckboxListTile(
+                                title: Text(topic.title, style: AppTextStyles.bodyText),
+                                value: isSelected,
+                                onChanged: (isSelected || canSelectMore)
+                                    ? (bool? value) {
+                                        setModalState(() {
+                                          if (isSelected) {
+                                            localSelected.remove(topic.id);
+                                          } else {
+                                            localSelected.add(topic.id);
+                                          }
+                                        });
+                                      }
+                                    : null,
+                                activeColor: AppColors.brandDark,
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.brandDark,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () {
-                        final selected = ref.read(gameFilterControllerProvider).selectedTopicIds;
-                        ref.read(leaderboardFilterProvider.notifier).setTopicIds(selected);
-                        context.pop();
-                      },
-                      child: Text(
-                        'Áp dụng',
-                        style: AppTextStyles.buttonText.copyWith(color: Colors.white),
                       ),
                     ),
-                  ),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border(top: BorderSide(color: AppColors.border)),
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.brandDark,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () {
+                            ref
+                                .read(leaderboardFilterProvider.notifier)
+                                .setTopicIds(List.from(localSelected));
+                            Navigator.pop(ctx);
+                          },
+                          child: Text(
+                            'Áp dụng',
+                            style: AppTextStyles.buttonText.copyWith(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -304,9 +497,9 @@ class LeaderboardScreen extends ConsumerWidget {
           ),
           const SizedBox(width: 16),
           CircleAvatar(
-            backgroundColor: AppColors.brandDark.withValues(alpha: 0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.5),
             child: Text(
-              entry.username.substring(0, 1).toUpperCase(),
+              entry.username.isNotEmpty ? entry.username.substring(0, 1).toUpperCase() : '?',
               style: const TextStyle(
                 color: AppColors.brandDark,
                 fontWeight: FontWeight.bold,

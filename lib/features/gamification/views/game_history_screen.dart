@@ -8,7 +8,7 @@ import 'package:mobile/core/widgets/pagination_widget.dart';
 import 'package:mobile/core/widgets/empty_filter_prompt.dart';
 import 'package:mobile/features/gamification/controllers/game_history_controller.dart';
 import 'package:mobile/features/gamification/controllers/game_history_detail_controller.dart';
-import 'package:mobile/features/gamification/controllers/game_filter_controller.dart';
+import 'package:mobile/features/gamification/controllers/all_topic_filter_controller.dart';
 import 'package:mobile/features/gamification/models/game_history_item_model.dart';
 import 'package:intl/intl.dart';
 
@@ -131,7 +131,7 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> {
     WidgetRef ref,
     GameHistoryFilterState filter,
   ) {
-    final gameFilterState = ref.watch(gameFilterControllerProvider);
+    final allTopicState = ref.watch(allTopicFilterProvider);
 
     return Container(
       color: AppColors.surface,
@@ -140,8 +140,8 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> {
         children: [
           Expanded(
             child: _buildDropdown<String>(
-              value: gameFilterState.selectedLevelId,
-              items: gameFilterState.levels
+              value: allTopicState.selectedLevelId,
+              items: allTopicState.levels
                   .map(
                     (l) => DropdownMenuItem(
                       value: l.id,
@@ -151,7 +151,7 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> {
                   .toList(),
               onChanged: (val) {
                 if (val != null) {
-                  ref.read(gameFilterControllerProvider.notifier).setLevel(val);
+                  ref.read(allTopicFilterProvider.notifier).setLevel(val);
                   ref.read(gameHistoryFilterProvider.notifier).setTopicIds([]);
                 }
               },
@@ -225,139 +225,133 @@ class _GameHistoryScreenState extends ConsumerState<GameHistoryScreen> {
     WidgetRef ref,
     List<String> currentTopicIds,
   ) {
+    // Local selection state for this bottom sheet session
+    final localSelected = List<String>.from(currentTopicIds);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Material(
-          color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Chọn chủ đề (Max 5)', style: AppTextStyles.h2),
-                      Row(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Material(
+              color: AppColors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Consumer(
-                            builder: (context, ref, child) {
-                              return IconButton(
+                          Text('Chọn chủ đề (Max 5)', style: AppTextStyles.h2),
+                          Row(
+                            children: [
+                              IconButton(
                                 onPressed: () {
-                                  ref
-                                      .read(
-                                        gameFilterControllerProvider.notifier,
-                                      )
-                                      .clearTopics();
+                                  setModalState(() => localSelected.clear());
                                 },
                                 icon: const Icon(
                                   Icons.delete_outline,
                                   color: AppColors.error,
                                 ),
                                 tooltip: 'Xóa tất cả',
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(ctx),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(ctx),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: Consumer(
-                    builder: (context, sheetRef, child) {
-                      final filterState = sheetRef.watch(
-                        gameFilterControllerProvider,
-                      );
-                      if (filterState.isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (filterState.error != null) {
-                        return Center(
-                          child: Text('Lỗi: \${filterState.error}'),
-                        );
-                      }
-                      if (filterState.topics.isEmpty) {
-                        return const Center(child: Text('Không có chủ đề nào'));
-                      }
-                      return ListView.builder(
-                        itemCount: filterState.topics.length,
-                        itemBuilder: (context, index) {
-                          final topic = filterState.topics[index];
-                          final isSelected = filterState.selectedTopicIds
-                              .contains(topic.id);
-                          final canSelectMore =
-                              filterState.selectedTopicIds.length < 5;
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: Consumer(
+                        builder: (context, sheetRef, child) {
+                          final topicState = sheetRef.watch(allTopicFilterProvider);
+                          if (topicState.isLoading) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (topicState.error != null) {
+                            return Center(
+                              child: Text('Lỗi: ${topicState.error}'),
+                            );
+                          }
+                          if (topicState.topics.isEmpty) {
+                            return const Center(child: Text('Không có chủ đề nào'));
+                          }
+                          return ListView.builder(
+                            itemCount: topicState.topics.length,
+                            itemBuilder: (context, index) {
+                              final topic = topicState.topics[index];
+                              final isSelected = localSelected.contains(topic.id);
+                              final canSelectMore = localSelected.length < 5;
 
-                          return CheckboxListTile(
-                            title: Text(
-                              topic.title,
-                              style: AppTextStyles.bodyText,
-                            ),
-                            value: isSelected,
-                            onChanged: (isSelected || canSelectMore)
-                                ? (bool? value) {
-                                    sheetRef
-                                        .read(
-                                          gameFilterControllerProvider.notifier,
-                                        )
-                                        .toggleTopic(topic.id);
-                                  }
-                                : null,
-                            activeColor: AppColors.brandDark,
+                              return CheckboxListTile(
+                                title: Text(
+                                  topic.title,
+                                  style: AppTextStyles.bodyText,
+                                ),
+                                value: isSelected,
+                                onChanged: (isSelected || canSelectMore)
+                                    ? (bool? value) {
+                                        setModalState(() {
+                                          if (isSelected) {
+                                            localSelected.remove(topic.id);
+                                          } else {
+                                            localSelected.add(topic.id);
+                                          }
+                                        });
+                                      }
+                                    : null,
+                                activeColor: AppColors.brandDark,
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.brandDark,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                       ),
-                      onPressed: () {
-                        final selected = ref
-                            .read(gameFilterControllerProvider)
-                            .selectedTopicIds;
-                        ref
-                            .read(gameHistoryFilterProvider.notifier)
-                            .setTopicIds(selected);
-                        context.pop();
-                      },
-                      child: Text(
-                        'Áp dụng',
-                        style: AppTextStyles.buttonText.copyWith(
-                          color: Colors.white,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border(top: BorderSide(color: AppColors.border)),
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.brandDark,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            ref
+                                .read(gameHistoryFilterProvider.notifier)
+                                .setTopicIds(List.from(localSelected));
+                            Navigator.pop(ctx);
+                          },
+                          child: Text(
+                            'Áp dụng',
+                            style: AppTextStyles.buttonText.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

@@ -6,6 +6,7 @@ import 'package:mobile/features/flashcard/views/widgets/swipeable_card_stack.dar
 import 'package:mobile/features/flashcard/controllers/progress_controller.dart';
 import 'package:mobile/features/gamification/controllers/game_filter_controller.dart';
 import 'package:mobile/features/learning/controllers/topic_list_controller.dart';
+import 'package:mobile/features/flashcard/controllers/progress_words_controller.dart';
 
 final topicFlashcardControllerProvider = FutureProvider.autoDispose
     .family<List<FlashcardModel>, String>((ref, topicId) async {
@@ -17,8 +18,22 @@ final topicFlashcardControllerProvider = FutureProvider.autoDispose
         }
       });
 
-      if (topicId == 'bookmarks') {
-        return repository.getBookmarksStudy();
+      if (topicId.startsWith('bookmarks')) {
+        String? filterTopicId;
+        String? filterLevelId;
+        
+        final parts = topicId.split('_');
+        for (var i = 1; i < parts.length; i++) {
+          if (parts[i].startsWith('level:')) {
+            filterLevelId = parts[i].substring(6);
+          } else if (parts[i].startsWith('topic:')) {
+            filterTopicId = parts[i].substring(6);
+          } else {
+            // backward compatibility
+            filterTopicId = parts[i];
+          }
+        }
+        return repository.getBookmarksStudy(topicId: filterTopicId, levelId: filterLevelId);
       }
 
       return repository.getFlashcardsByTopic(topicId);
@@ -32,7 +47,7 @@ final batchFlashcardActionProvider =
 
 class BatchFlashcardActionNotifier
     extends Notifier<List<Map<String, dynamic>>> {
-  late final FlashcardRepository _repository;
+  late FlashcardRepository _repository;
 
   @override
   List<Map<String, dynamic>> build() {
@@ -44,20 +59,13 @@ class BatchFlashcardActionNotifier
     final isCorrect = direction == SwipeDirection.right;
     final newResult = {'wordId': wordId, 'isCorrect': isCorrect};
     state = [...state, newResult];
-    print(
-      '=> Đã lưu kết quả cục bộ: WordID: $wordId (isCorrect: $isCorrect). Tổng thẻ đã lưu: ${state.length}',
-    );
   }
 
   Future<bool> submitBatch() async {
     if (state.isEmpty) return true;
 
     try {
-      print('=> Bắt đầu gọi API /submit-batch cho ${state.length} từ vựng...');
       await _repository.submitBatchFlashcards(state);
-      print(
-        '=> [THÀNH CÔNG] Đã ghi nhận tiến độ batch flashcard (SRS cập nhật).',
-      );
       // Xoá state sau khi gửi thành công
       state = [];
 
@@ -65,10 +73,10 @@ class BatchFlashcardActionNotifier
       ref.invalidate(topicListControllerProvider);
       ref.invalidate(gameFilterControllerProvider);
       ref.invalidate(progressControllerProvider);
+      ref.invalidate(progressWordsControllerProvider);
 
       return true;
     } catch (e) {
-      print('=> [THẤT BẠI] Lỗi submit batch flashcard: $e');
       return false;
     }
   }

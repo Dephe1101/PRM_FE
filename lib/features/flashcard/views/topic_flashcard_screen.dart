@@ -27,12 +27,13 @@ class TopicFlashcardScreen extends ConsumerStatefulWidget {
 class _TopicFlashcardScreenState extends ConsumerState<TopicFlashcardScreen> {
   final GlobalKey<SwipeableCardStackState> _cardStackKey =
       GlobalKey<SwipeableCardStackState>();
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(topicFlashcardControllerProvider(widget.topicId));
     // Dùng ref.listen thay vì ref.watch để giữ Provider sống mà KHÔNG làm rebuild lại UI
-    ref.listen(batchFlashcardActionProvider, (_, __) {});
+    ref.listen(batchFlashcardActionProvider, (_, _) {});
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -68,7 +69,11 @@ class _TopicFlashcardScreenState extends ConsumerState<TopicFlashcardScreen> {
                     child: SwipeableCardStack(
                       key: _cardStackKey,
                       flashcards: flashcards,
-                      onPageChanged: (index) {},
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                      },
                       onSwipe: (index, direction) {
                         final wordId = flashcards[index].word.id;
                         ref
@@ -166,35 +171,30 @@ class _TopicFlashcardScreenState extends ConsumerState<TopicFlashcardScreen> {
                   ),
                 ),
                 // Chỉ hiển thị nút điều khiển nếu chưa học hết
-                Consumer(
-                  builder: (context, ref, child) {
-                    // Để tối ưu, lý ra nên track index bằng state,
-                    // nhưng ở đây ta dùng GlobalKey nên nút sẽ mờ hoặc không hoạt động nếu hết thẻ.
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 48.0, top: 16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildActionButton(
-                            icon: Icons.close,
-                            color: AppColors.error,
-                            onTap: () {
-                              _cardStackKey.currentState?.triggerSwipeLeft();
-                            },
-                          ),
-                          const SizedBox(width: 48),
-                          _buildActionButton(
-                            icon: Icons.check,
-                            color: AppColors.success,
-                            onTap: () {
-                              _cardStackKey.currentState?.triggerSwipeRight();
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                if (_currentIndex < flashcards.length)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 48.0, top: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.close,
+                          color: AppColors.error,
+                          onTap: () {
+                            _cardStackKey.currentState?.triggerSwipeLeft();
+                          },
+                        ),
+                        const SizedBox(width: 48),
+                        _buildActionButton(
+                          icon: Icons.check,
+                          color: AppColors.success,
+                          onTap: () {
+                            _cardStackKey.currentState?.triggerSwipeRight();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           );

@@ -34,7 +34,7 @@ class EmptyFilterPrompt extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
+                color: AppColors.primary.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -46,7 +46,7 @@ class EmptyFilterPrompt extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withOpacity(0.5),
+                  color: AppColors.surface.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -69,7 +69,7 @@ class EmptyFilterPrompt extends StatelessWidget {
                 subtitle,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodyText.copyWith(
-                  color: AppColors.brandDark.withOpacity(0.8),
+                  color: AppColors.brandDark.withValues(alpha: 0.8),
                 ),
               ),
             ],

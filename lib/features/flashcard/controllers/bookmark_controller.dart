@@ -20,11 +20,10 @@ class BookmarkController extends AsyncNotifier<List<FlashcardModel>> {
     });
 
     final filterState = ref.watch(bookmarkFilterProvider);
-    if (filterState.selectedTopicId != null) {
-      return _repository.getBookmarkedFlashcardsByTopic(filterState.selectedTopicId!);
-    }
-
-    return _repository.getBookmarks();
+    return _repository.getBookmarks(
+      levelId: filterState.selectedLevelId,
+      topicId: filterState.selectedTopicId,
+    );
   }
 
   Future<void> toggleBookmark(String wordId) async {
@@ -52,7 +51,6 @@ class BookmarkController extends AsyncNotifier<List<FlashcardModel>> {
     } catch (e) {
       // Revert
       state = previousState;
-      print('Lỗi toggle bookmark: $e');
     }
   }
 

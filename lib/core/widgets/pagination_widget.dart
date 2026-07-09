@@ -26,14 +26,18 @@ class PaginationWidget extends StatelessWidget {
           children: [
             _buildControlButton(
               icon: Icons.chevron_left,
-              onPressed: currentPage > 1 ? () => onPageChanged(currentPage - 1) : null,
+              onPressed: currentPage > 1
+                  ? () => onPageChanged(currentPage - 1)
+                  : null,
             ),
             const SizedBox(width: 8),
             ..._buildPageNumbers(),
             const SizedBox(width: 8),
             _buildControlButton(
               icon: Icons.chevron_right,
-              onPressed: currentPage < totalPages ? () => onPageChanged(currentPage + 1) : null,
+              onPressed: currentPage < totalPages
+                  ? () => onPageChanged(currentPage + 1)
+                  : null,
             ),
           ],
         ),
@@ -48,10 +52,18 @@ class PaginationWidget extends StatelessWidget {
     for (int i = 0; i < pageNumbers.length; i++) {
       final page = pageNumbers[i];
       if (page == null) {
-        widgets.add(const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4.0),
-          child: Text('...', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
-        ));
+        widgets.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4.0),
+            child: Text(
+              '...',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
       } else {
         widgets.add(_buildPageButton(page));
       }
@@ -69,9 +81,24 @@ class PaginationWidget extends StatelessWidget {
     if (currentPage <= 3) {
       pages.addAll([1, 2, 3, 4, null, totalPages]);
     } else if (currentPage >= totalPages - 2) {
-      pages.addAll([1, null, totalPages - 3, totalPages - 2, totalPages - 1, totalPages]);
+      pages.addAll([
+        1,
+        null,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ]);
     } else {
-      pages.addAll([1, null, currentPage - 1, currentPage, currentPage + 1, null, totalPages]);
+      pages.addAll([
+        1,
+        null,
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        null,
+        totalPages,
+      ]);
     }
     return pages;
   }
@@ -104,7 +131,10 @@ class PaginationWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildControlButton({required IconData icon, VoidCallback? onPressed}) {
+  Widget _buildControlButton({
+    required IconData icon,
+    VoidCallback? onPressed,
+  }) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
@@ -113,16 +143,18 @@ class PaginationWidget extends StatelessWidget {
         height: 36,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: onPressed != null ? AppColors.surface : AppColors.surface.withValues(alpha: 0.5),
+          color: onPressed != null
+              ? AppColors.surface
+              : AppColors.surface.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: AppColors.border,
-          ),
+          border: Border.all(color: AppColors.border),
         ),
         child: Icon(
           icon,
           size: 20,
-          color: onPressed != null ? AppColors.textPrimary : AppColors.textSecondary,
+          color: onPressed != null
+              ? AppColors.textPrimary
+              : AppColors.textSecondary,
         ),
       ),
     );

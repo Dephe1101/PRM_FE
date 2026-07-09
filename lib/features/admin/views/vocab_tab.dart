@@ -310,7 +310,7 @@ class _VocabTabState extends ConsumerState<VocabTab> {
               widgets.add(const SizedBox(height: 80)); // Padding for FAB
               return widgets;
             },
-            loading: () => [const Center(child: CircularProgressIndicator())],
+            loading: () => [const SizedBox.shrink()],
             error: (e, _) => [
               ErrorRetryWidget(
                 errorMessage: 'Lỗi tải từ vựng: $e',

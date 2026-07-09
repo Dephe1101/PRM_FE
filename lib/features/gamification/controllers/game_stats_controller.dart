@@ -75,8 +75,8 @@ class GameStatsController extends Notifier<GameStatsState> {
   Future<void> fetchTopics(String levelId) async {
     state = state.copyWith(error: null);
     try {
-      final repo = ref.read(gameRepositoryProvider);
-      final topics = await repo.getEligibleTopics(levelId: levelId);
+      final repo = ref.read(homeRepositoryProvider);
+      final topics = await repo.getTopicsByLevel(levelId);
 
       state = state.copyWith(
         topics: topics,

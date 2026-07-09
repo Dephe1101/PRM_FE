@@ -19,11 +19,10 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
-    final response = await dio.post(ApiConstants.register, data: {
-      'username': username,
-      'email': email,
-      'password': password,
-    });
+    final response = await dio.post(
+      ApiConstants.register,
+      data: {'username': username, 'email': email, 'password': password},
+    );
     return response.data['data']; // Trả về { user, accessToken }
   }
 
@@ -31,10 +30,10 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
-    final response = await dio.post(ApiConstants.login, data: {
-      'email': email,
-      'password': password,
-    });
+    final response = await dio.post(
+      ApiConstants.login,
+      data: {'email': email, 'password': password},
+    );
     return response.data['data']; // Trả về { user, accessToken }
   }
 
@@ -51,6 +50,14 @@ class AuthRemoteDataSource {
     final response = await dio.get(
       ApiConstants.getMe,
       options: Options(extra: {'showLoading': false}),
+    );
+    return UserModel.fromJson(response.data['data']);
+  }
+
+  Future<UserModel> updateProfile({required String username}) async {
+    final response = await dio.patch(
+      ApiConstants.getMe,
+      data: {'username': username},
     );
     return UserModel.fromJson(response.data['data']);
   }

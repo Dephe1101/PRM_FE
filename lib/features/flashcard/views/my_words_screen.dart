@@ -73,10 +73,16 @@ class MyWordsScreen extends ConsumerWidget {
                             value: null,
                             child: Text('Tất cả Levels'),
                           ),
-                          ...filterState.levels.map((level) => DropdownMenuItem(
-                            value: level.id,
-                            child: Text(level.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          )),
+                          ...filterState.levels.map(
+                            (level) => DropdownMenuItem(
+                              value: level.id,
+                              child: Text(
+                                level.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: filterNotifier.selectLevel,
                       ),
@@ -114,10 +120,16 @@ class MyWordsScreen extends ConsumerWidget {
                                   value: null,
                                   child: Text('Tất cả Topics'),
                                 ),
-                                ...filterState.topics.map((topic) => DropdownMenuItem(
-                                  value: topic.id,
-                                  child: Text(topic.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                )),
+                                ...filterState.topics.map(
+                                  (topic) => DropdownMenuItem(
+                                    value: topic.id,
+                                    child: Text(
+                                      topic.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
                               ],
                               onChanged: filterState.selectedLevelId == null
                                   ? null
@@ -131,136 +143,156 @@ class MyWordsScreen extends ConsumerWidget {
           ),
           Expanded(
             child: state.when(
-        data: (flashcards) {
-          if (flashcards.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.bookmark_border, size: 80, color: AppColors.textSecondary.withValues(alpha: 0.5)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Bạn chưa lưu từ vựng nào.',
-                    style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(24),
-            itemCount: flashcards.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final flashcard = flashcards[index];
-              final word = flashcard.word;
-              final progress = flashcard.progress;
-
-              final displayChar = word.kanji.isNotEmpty ? word.kanji : word.hiragana;
-
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x05000000),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    // Kanji Box
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.border),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        displayChar,
-                        style: AppTextStyles.h1.copyWith(
-                          fontSize: 32,
-                          color: AppColors.brandDark,
+              data: (flashcards) {
+                if (flashcards.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.bookmark_border,
+                          size: 80,
+                          color: AppColors.textSecondary.withValues(alpha: 0.5),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Bạn chưa lưu từ vựng nào.',
+                          style: AppTextStyles.h3.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    // Info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            word.hiragana,
-                            style: AppTextStyles.h3,
-                          ),
-                          Text(
-                            word.meaning,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfacePink,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  word.levelName ?? 'N/A',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.brandDark,
-                                  ),
-                                ),
-                              ),
-                            ],
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(24),
+                  itemCount: flashcards.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final flashcard = flashcards[index];
+                    final word = flashcard.word;
+
+                    final displayChar = word.kanji.isNotEmpty
+                        ? word.kanji
+                        : word.hiragana;
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x05000000),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
-                    ),
-                    // Action
-                    IconButton(
-                      icon: const Icon(Icons.bookmark, color: AppColors.warning),
-                      onPressed: () {
-                        ref.read(bookmarkControllerProvider.notifier).toggleBookmark(word.id);
-                      },
-                    ),
-                  ],
+                      child: Row(
+                        children: [
+                          // Kanji Box
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.border),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              displayChar,
+                              style: AppTextStyles.h1.copyWith(
+                                fontSize: 32,
+                                color: AppColors.brandDark,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(word.hiragana, style: AppTextStyles.h3),
+                                Text(
+                                  word.meaning,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfacePink,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        word.levelName ?? 'N/A',
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.brandDark,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Action
+                          IconButton(
+                            icon: const Icon(
+                              Icons.bookmark,
+                              color: AppColors.warning,
+                            ),
+                            onPressed: () {
+                              ref
+                                  .read(bookmarkControllerProvider.notifier)
+                                  .toggleBookmark(word.id);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (e, st) => Center(
+                child: ErrorRetryWidget(
+                  errorMessage: 'Lỗi: $e',
+                  onRetry: () => ref.invalidate(bookmarkControllerProvider),
                 ),
-              );
-            },
-          );
-        },
-        loading: () => const SizedBox.shrink(),
-        error: (e, st) => Center(
-          child: ErrorRetryWidget(
-            errorMessage: 'Lỗi: $e',
-            onRetry: () => ref.invalidate(bookmarkControllerProvider),
+              ),
+            ),
           ),
-        ),
-        ),
+        ],
       ),
-          ],
-        ),
       floatingActionButton: state.maybeWhen(
         data: (flashcards) {
-          if (flashcards.isEmpty) return null;
           return FloatingActionButton.extended(
             onPressed: () {
-              context.push('/flashcard/bookmarks?topicName=Từ đã lưu');
+              final topicParam = filterState.selectedTopicId != null
+                  ? '&filterTopicId=${filterState.selectedTopicId}'
+                  : '';
+              final levelParam = filterState.selectedLevelId != null
+                  ? '&filterLevelId=${filterState.selectedLevelId}'
+                  : '';
+              context.push(
+                '/flashcard/bookmarks?topicName=Từ đã lưu$topicParam$levelParam',
+              );
             },
             backgroundColor: AppColors.brandDark,
             icon: const Icon(Icons.style, color: Colors.white),
