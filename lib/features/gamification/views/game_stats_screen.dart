@@ -7,9 +7,10 @@ import 'package:mobile/core/widgets/empty_filter_prompt.dart';
 import 'package:mobile/core/widgets/error_retry_widget.dart';
 import 'package:mobile/features/gamification/controllers/game_stats_controller.dart';
 import 'package:mobile/features/gamification/controllers/word_stats_controller.dart';
-import 'package:mobile/features/flashcard/models/flashcard_model.dart';
-import 'package:mobile/core/utils/date_time_utils.dart';
-import 'package:mobile/features/admin/models/topic_model.dart';
+import 'package:mobile/features/flashcard/controllers/progress_words_controller.dart';
+import 'package:mobile/features/flashcard/views/progress_words_screen.dart';
+import 'package:mobile/features/flashcard/models/flashcard_stats_model.dart';
+import 'package:mobile/core/widgets/pagination_widget.dart';
 
 class GameStatsScreen extends ConsumerStatefulWidget {
   const GameStatsScreen({super.key});
@@ -21,6 +22,7 @@ class GameStatsScreen extends ConsumerStatefulWidget {
 class _GameStatsScreenState extends ConsumerState<GameStatsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String _selectedWordType = 'learning';
 
   @override
   void initState() {
@@ -36,6 +38,22 @@ class _GameStatsScreenState extends ConsumerState<GameStatsScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<FlashcardStatsModel?>(
+      wordStatsControllerProvider.select((s) => s.stats),
+      (prev, next) {
+        if (next != null) {
+          final wordState = ref.read(wordStatsControllerProvider);
+          ref
+              .read(progressWordsControllerProvider.notifier)
+              .load(
+                type: _selectedWordType,
+                levelId: wordState.selectedLevelId,
+                topicId: wordState.selectedTopicId,
+              );
+        }
+      },
+    );
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -167,9 +185,16 @@ class _GameStatsScreenState extends ConsumerState<GameStatsScreen>
                             builder: (context, ref, child) {
                               return IconButton(
                                 onPressed: () {
-                                  ref.read(gameStatsControllerProvider.notifier).clearTopics();
+                                  ref
+                                      .read(
+                                        gameStatsControllerProvider.notifier,
+                                      )
+                                      .clearTopics();
                                 },
-                                icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.error,
+                                ),
                                 tooltip: 'Xóa tất cả',
                               );
                             },
@@ -416,131 +441,100 @@ class _GameStatsScreenState extends ConsumerState<GameStatsScreen>
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.brandDark.withValues(alpha: 0.1),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _selectedWordType = 'learning');
+                    ref
+                        .read(progressWordsControllerProvider.notifier)
+                        .load(
+                          type: 'learning',
+                          levelId: wordState.selectedLevelId,
+                          topicId: wordState.selectedTopicId,
+                        );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '${stats.totalLearning}',
-                      style: AppTextStyles.h2.copyWith(
-                        color: AppColors.brandDark,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandDark.withValues(
+                        alpha: _selectedWordType == 'learning' ? 0.2 : 0.05,
                       ),
+                      border: Border.all(
+                        color: _selectedWordType == 'learning'
+                            ? AppColors.brandDark
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    Text('Đang học', style: AppTextStyles.bodyText),
-                  ],
+                    child: Column(
+                      children: [
+                        Text(
+                          '${stats.totalLearning}',
+                          style: AppTextStyles.h2.copyWith(
+                            color: AppColors.brandDark,
+                          ),
+                        ),
+                        Text('Đang học', style: AppTextStyles.bodyText),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.1),
+              const SizedBox(width: 16),
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _selectedWordType = 'mastered');
+                    ref
+                        .read(progressWordsControllerProvider.notifier)
+                        .load(
+                          type: 'mastered',
+                          levelId: wordState.selectedLevelId,
+                          topicId: wordState.selectedTopicId,
+                        );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '${stats.totalMastered}',
-                      style: AppTextStyles.h2.copyWith(
-                        color: AppColors.success,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(
+                        alpha: _selectedWordType == 'mastered' ? 0.2 : 0.05,
                       ),
+                      border: Border.all(
+                        color: _selectedWordType == 'mastered'
+                            ? AppColors.success
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    Text('Đã thuộc', style: AppTextStyles.bodyText),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        if (stats.learningWords.isNotEmpty) ...[
-          Text('Từ đang học', style: AppTextStyles.h3),
-          const SizedBox(height: 8),
-          ...stats.learningWords.map((fw) => _buildWordTile(fw)),
-          const SizedBox(height: 16),
-        ],
-        if (stats.masteredWords.isNotEmpty) ...[
-          Text('Từ đã thuộc', style: AppTextStyles.h3),
-          const SizedBox(height: 8),
-          ...stats.masteredWords.map((fw) => _buildWordTile(fw)),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildWordTile(FlashcardModel flashcardModel) {
-    final word = flashcardModel.word;
-    final progress = flashcardModel.progress;
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: ListTile(
-        title: Text(
-          word.kanji.isNotEmpty ? word.kanji : word.hiragana,
-          style: AppTextStyles.h3,
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${word.hiragana} • ${word.romaji}',
-              style: AppTextStyles.bodyText.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              word.meaning,
-              style: AppTextStyles.bodyText.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            if (progress.updatedAt != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Lần học cuối: ${DateTimeUtils.formatVietnamTime(DateTimeUtils.toVietnamTime(progress.updatedAt!))}',
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.brandDark,
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.w500,
+                    child: Column(
+                      children: [
+                        Text(
+                          '${stats.totalMastered}',
+                          style: AppTextStyles.h2.copyWith(
+                            color: AppColors.success,
+                          ),
+                        ),
+                        Text('Đã thuộc', style: AppTextStyles.bodyText),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
-          ],
+          ),
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              'Đúng: ${progress.correctCount}',
-              style: AppTextStyles.caption.copyWith(color: AppColors.success),
-            ),
-            Text(
-              'Sai: ${progress.wrongCount}',
-              style: AppTextStyles.caption.copyWith(color: AppColors.error),
-            ),
-          ],
-        ),
-      ),
+        Expanded(child: _buildProgressWordsList()),
+      ],
     );
   }
 
@@ -559,7 +553,7 @@ class _GameStatsScreenState extends ConsumerState<GameStatsScreen>
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -570,7 +564,7 @@ class _GameStatsScreenState extends ConsumerState<GameStatsScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 36),
@@ -608,6 +602,109 @@ class _GameStatsScreenState extends ConsumerState<GameStatsScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProgressWordsList() {
+    final state = ref.watch(progressWordsControllerProvider);
+    final isMastered = _selectedWordType == 'mastered';
+    final accentColor = isMastered
+        ? AppColors.accentMastered
+        : AppColors.brandDark;
+    final bgColor = isMastered
+        ? AppColors.accentMasteredTrack
+        : AppColors.surfacePink;
+
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+            const SizedBox(height: 12),
+            Text('Có lỗi xảy ra', style: AppTextStyles.h3),
+            const SizedBox(height: 8),
+            Text(
+              state.error!,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref
+                  .read(progressWordsControllerProvider.notifier)
+                  .goToPage(state.currentPage),
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final docs = state.data.docs;
+    final totalPages = state.data.totalPages;
+
+    if (docs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isMastered ? Icons.emoji_events_outlined : Icons.book_outlined,
+              size: 64,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Không có từ vựng nào',
+              style: AppTextStyles.bodyText.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final item = docs[index];
+              return ProgressWordCard(
+                word: item.word,
+                flashcard: item,
+                accent: accentColor,
+                bg: bgColor,
+                isMastered: isMastered,
+              );
+            },
+          ),
+        ),
+        if (totalPages > 1)
+          Container(
+            color: AppColors.surface,
+            padding: const EdgeInsets.only(bottom: 16, top: 8),
+            child: PaginationWidget(
+              currentPage: state.currentPage,
+              totalPages: totalPages,
+              onPageChanged: (page) {
+                ref
+                    .read(progressWordsControllerProvider.notifier)
+                    .goToPage(page);
+              },
+            ),
+          ),
+      ],
     );
   }
 }

@@ -58,6 +58,8 @@ class HomeTab extends ConsumerWidget {
                   onSelected: (value) {
                     if (value == 'logout') {
                       ref.read(authControllerProvider.notifier).logout();
+                    } else if (value == 'profile') {
+                      context.push(RouteConstants.profile);
                     }
                   },
                   offset: const Offset(0, 52),
@@ -70,7 +72,7 @@ class HomeTab extends ConsumerWidget {
                   color: AppColors.surface,
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundColor: AppColors.primary.withOpacity(0.5),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.5),
                     child: Text(
                       user?.initials ?? '?',
                       style: AppTextStyles.bodyText.copyWith(
@@ -81,24 +83,31 @@ class HomeTab extends ConsumerWidget {
                   ),
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                      enabled: false,
+                      value: 'profile',
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
-                        vertical: 12,
+                        vertical: 8,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text(
-                            user?.username ?? '',
-                            style: AppTextStyles.bodyText.copyWith(
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              size: 18,
+                              color: AppColors.primary,
                             ),
                           ),
+                          const SizedBox(width: 16),
                           Text(
-                            user?.email ?? '',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.textSecondary,
+                            'Hồ sơ',
+                            style: AppTextStyles.bodyText.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],

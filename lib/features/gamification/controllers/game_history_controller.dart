@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/auth/controllers/auth_controller.dart';
 import 'package:mobile/features/gamification/models/game_history_item_model.dart';
 import 'package:mobile/features/gamification/repositories/game_repository.dart';
-import 'package:mobile/core/network/global_loading_provider.dart';
 
 class GameHistoryFilterState {
   final List<String> topicIds;

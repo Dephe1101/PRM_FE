@@ -4,15 +4,17 @@ import 'package:mobile/features/flashcard/models/flashcard_model.dart';
 import 'package:mobile/features/flashcard/repositories/flashcard_repository.dart';
 import 'package:mobile/features/flashcard/views/widgets/swipeable_card_stack.dart';
 
-final reviewControllerProvider = AsyncNotifierProvider.autoDispose<
-    ReviewController, List<FlashcardModel>>(ReviewController.new);
+final reviewControllerProvider =
+    AsyncNotifierProvider.autoDispose<ReviewController, List<FlashcardModel>>(
+      ReviewController.new,
+    );
 
 class ReviewController extends AsyncNotifier<List<FlashcardModel>> {
   late final FlashcardRepository _repository;
 
   @override
   Future<List<FlashcardModel>> build() async {
-    _repository = ref.read(flashcardRepositoryProvider);
+    _repository = ref.watch(flashcardRepositoryProvider);
     ref.listen(authControllerProvider, (previous, next) {
       if (previous?.isLoggedIn == true && next.isLoggedIn == false) {
         ref.invalidateSelf();
@@ -42,7 +44,7 @@ class ReviewController extends AsyncNotifier<List<FlashcardModel>> {
         state = AsyncValue.data(newList);
       }
     } catch (e) {
-      print('Lỗi submit flashcard (review): $e');
+      // Ignore
     }
   }
 
