@@ -17,6 +17,7 @@ class DailyReviewScreen extends ConsumerStatefulWidget {
 
 class _DailyReviewScreenState extends ConsumerState<DailyReviewScreen> {
   final GlobalKey<SwipeableCardStackState> _cardStackKey = GlobalKey<SwipeableCardStackState>();
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +90,11 @@ class _DailyReviewScreenState extends ConsumerState<DailyReviewScreen> {
                     child: SwipeableCardStack(
                       key: _cardStackKey,
                       flashcards: flashcards,
-                      onPageChanged: (index) {},
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                      },
                       onSwipe: (index, direction) {
                         final wordId = flashcards[index].word.id;
                         ref
@@ -157,29 +162,30 @@ class _DailyReviewScreenState extends ConsumerState<DailyReviewScreen> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 48.0, top: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildActionButton(
-                        icon: Icons.close,
-                        color: AppColors.error,
-                        onTap: () {
-                          _cardStackKey.currentState?.triggerSwipeLeft();
-                        },
-                      ),
-                      const SizedBox(width: 48),
-                      _buildActionButton(
-                        icon: Icons.check,
-                        color: AppColors.success,
-                        onTap: () {
-                          _cardStackKey.currentState?.triggerSwipeRight();
-                        },
-                      ),
-                    ],
+                if (_currentIndex < flashcards.length)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 48.0, top: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.close,
+                          color: AppColors.error,
+                          onTap: () {
+                            _cardStackKey.currentState?.triggerSwipeLeft();
+                          },
+                        ),
+                        const SizedBox(width: 48),
+                        _buildActionButton(
+                          icon: Icons.check,
+                          color: AppColors.success,
+                          onTap: () {
+                            _cardStackKey.currentState?.triggerSwipeRight();
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           );

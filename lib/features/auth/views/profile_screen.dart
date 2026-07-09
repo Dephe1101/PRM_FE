@@ -5,11 +5,61 @@ import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/widgets/error_retry_widget.dart';
 import 'package:mobile/features/auth/controllers/profile_controller.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _isEditingName = false;
+  final TextEditingController _nameController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _submitNameChange(String currentName) async {
+    final newName = _nameController.text.trim();
+    if (newName.isEmpty || newName == currentName) {
+      setState(() {
+        _isEditingName = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final success = await ref
+        .read(profileControllerProvider.notifier)
+        .updateUsername(newName);
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        if (success) {
+          _isEditingName = false;
+        }
+      });
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cập nhật tên thất bại. Vui lòng thử lại.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profileState = ref.watch(profileControllerProvider);
 
     return Scaffold(
@@ -39,9 +89,61 @@ class ProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               // Name and Email
-              Text(
-                user.username,
-                style: AppTextStyles.heading2.copyWith(color: AppColors.brandDark),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isEditingName)
+                    SizedBox(
+                      width: 200,
+                      child: TextField(
+                        controller: _nameController,
+                        style: AppTextStyles.heading2.copyWith(color: AppColors.brandDark),
+                        decoration: InputDecoration(
+                          hintText: 'Nhập tên mới',
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onSubmitted: (_) => _submitNameChange(user.username),
+                        autofocus: true,
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: Text(
+                        user.username,
+                        style: AppTextStyles.heading2.copyWith(color: AppColors.brandDark),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  if (_isLoading)
+                    const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    IconButton(
+                      icon: Icon(
+                        _isEditingName ? Icons.check : Icons.edit,
+                        color: _isEditingName ? AppColors.success : AppColors.primary,
+                      ),
+                      onPressed: () {
+                        if (_isEditingName) {
+                          _submitNameChange(user.username);
+                        } else {
+                          setState(() {
+                            _isEditingName = true;
+                            _nameController.text = user.username;
+                          });
+                        }
+                      },
+                    ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(

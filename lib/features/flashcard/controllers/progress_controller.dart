@@ -11,7 +11,7 @@ final progressControllerProvider =
     );
 
 class ProgressController extends AsyncNotifier<FlashcardStatsModel> {
-  late final FlashcardRepository _repository;
+  late FlashcardRepository _repository;
 
   @override
   FutureOr<FlashcardStatsModel> build() async {

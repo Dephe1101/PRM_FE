@@ -45,7 +45,9 @@ class ProgressWordsState {
 
 class ProgressWordsController extends Notifier<ProgressWordsState> {
   @override
-  ProgressWordsState build() => const ProgressWordsState();
+  ProgressWordsState build() {
+    return const ProgressWordsState();
+  }
 
   Future<void> load({
     required String type,

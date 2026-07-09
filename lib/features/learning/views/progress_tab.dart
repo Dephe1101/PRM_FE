@@ -165,7 +165,7 @@ class ProgressTab extends ConsumerWidget {
               loading: () => const SizedBox.shrink(),
               error: (err, st) => Center(
                 child: ErrorRetryWidget(
-                  errorMessage: 'Không thể tải dữ liệu thống kê.',
+                  errorMessage: 'Lỗi: $err',
                   onRetry: () => ref
                       .read(progressControllerProvider.notifier)
                       .refreshProgress(),

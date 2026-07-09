@@ -47,7 +47,7 @@ final batchFlashcardActionProvider =
 
 class BatchFlashcardActionNotifier
     extends Notifier<List<Map<String, dynamic>>> {
-  late final FlashcardRepository _repository;
+  late FlashcardRepository _repository;
 
   @override
   List<Map<String, dynamic>> build() {

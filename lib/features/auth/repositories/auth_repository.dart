@@ -89,6 +89,15 @@ class AuthRepository {
     }
   }
 
+  Future<Either<Failure, UserModel>> updateProfile({required String username}) async {
+    try {
+      final user = await _remoteDataSource.updateProfile(username: username);
+      return right(user);
+    } catch (e) {
+      return left(Failure.fromException(ApiErrorHandler.handle(e)));
+    }
+  }
+
   Future<Either<Failure, List<SessionModel>>> getSessions() async {
     try {
       final sessions = await _remoteDataSource.getSessions();

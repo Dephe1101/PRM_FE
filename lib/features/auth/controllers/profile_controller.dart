@@ -31,4 +31,18 @@ class ProfileController extends AsyncNotifier<UserModel> {
       );
     });
   }
+
+  Future<bool> updateUsername(String newName) async {
+    final repo = ref.read(authRepositoryProvider);
+    final result = await repo.updateProfile(username: newName);
+    return result.fold(
+      (failure) {
+        return false;
+      },
+      (user) {
+        state = AsyncValue.data(user);
+        return true;
+      },
+    );
+  }
 }
