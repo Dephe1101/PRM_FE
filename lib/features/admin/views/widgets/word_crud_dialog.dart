@@ -4,6 +4,8 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/utils/toast_util.dart';
 import 'package:mobile/features/admin/models/word_model.dart';
+import 'package:mobile/features/admin/models/topic_model.dart';
+import 'package:mobile/features/admin/models/level_model.dart';
 import 'package:mobile/core/exceptions/app_exception.dart';
 import 'package:mobile/core/validators/word_validator.dart';
 import 'package:mobile/core/widgets/primary_button.dart';
@@ -11,8 +13,8 @@ import 'package:mobile/features/admin/repositories/topic_repository.dart';
 
 class WordCrudDialog extends ConsumerStatefulWidget {
   final WordModel? initialData;
-  final List<dynamic>? topics;
-  final List<dynamic>? levels;
+  final List<TopicModel>? topics;
+  final List<LevelModel>? levels;
   final String? defaultTopicId;
   final Future<void> Function(Map<String, dynamic> data) onSubmit;
 
@@ -41,7 +43,7 @@ class _WordCrudDialogState extends ConsumerState<WordCrudDialog> {
   late TextEditingController _meaningController;
   late TextEditingController _exampleController;
   late TextEditingController _audioUrlController;
-  List<dynamic> _currentTopics = [];
+  List<TopicModel> _currentTopics = [];
 
   @override
   void initState() {
@@ -50,12 +52,10 @@ class _WordCrudDialogState extends ConsumerState<WordCrudDialog> {
 
     // Set _levelId based on _topicId if possible
     if (_topicId.isNotEmpty && widget.topics != null) {
-      final topic = widget.topics!.cast<dynamic>().firstWhere(
-        (t) => t.id == _topicId,
-        orElse: () => null,
-      );
-      if (topic != null) {
-        _levelId = topic.levelId;
+      final topics = widget.topics!;
+      final idx = topics.indexWhere((t) => t.id == _topicId);
+      if (idx != -1) {
+        _levelId = topics[idx].levelId;
       }
     }
 

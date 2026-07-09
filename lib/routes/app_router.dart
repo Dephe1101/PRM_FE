@@ -10,6 +10,7 @@ import 'package:mobile/features/auth/views/register_screen.dart';
 import 'package:mobile/features/home/views/main_scaffold.dart';
 import 'package:mobile/features/splash/views/splash_screen.dart';
 import 'package:mobile/features/admin/views/main_admin_scaffold.dart';
+import 'package:mobile/features/auth/views/profile_screen.dart';
 import 'package:mobile/core/widgets/placeholder_screen.dart';
 import 'package:mobile/features/learning/views/topic_detail_screen.dart';
 import 'package:mobile/features/flashcard/views/topic_flashcard_screen.dart';
@@ -19,6 +20,7 @@ import 'package:mobile/features/gamification/views/falling_word_game_screen.dart
 import 'package:mobile/features/gamification/views/leaderboard_screen.dart';
 import 'package:mobile/features/gamification/views/game_history_screen.dart';
 import 'package:mobile/features/gamification/views/game_stats_screen.dart';
+import 'package:mobile/features/flashcard/views/progress_words_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -79,7 +81,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       // 5. Phân quyền Admin vs User
       if (isLoggedIn) {
-        if (isAdmin && !isGoingToAdmin) {
+        final isGoingToProfile = state.uri.path == RouteConstants.profile;
+
+        if (isAdmin && !isGoingToAdmin && !isGoingToProfile) {
           // Admin đi lạc vào khu vực User -> Bắt về Admin Dashboard
           return RouteConstants.admin;
         } else if (!isAdmin && isGoingToAdmin) {
@@ -108,6 +112,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const MainScaffold(),
       ),
       GoRoute(
+        path: RouteConstants.profile,
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
         path: RouteConstants.topics,
         builder: (context, state) => PlaceholderScreen(
           title: 'Topics',
@@ -125,10 +133,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: RouteConstants.flashcard,
         builder: (context, state) {
           final topicId = state.pathParameters['topicId']!;
-          // Giả sử có query parameter cho topicName để hiển thị trên AppBar
-          final topicName =
-              state.uri.queryParameters['topicName'] ?? 'Flashcard';
-          return TopicFlashcardScreen(topicId: topicId, topicName: topicName);
+          final topicName = state.uri.queryParameters['topicName'] ?? 'Flashcard';
+          final filterTopicId = state.uri.queryParameters['filterTopicId'];
+          final filterLevelId = state.uri.queryParameters['filterLevelId'];
+          
+          String finalTopicId = topicId;
+          if (topicId == 'bookmarks') {
+            finalTopicId = 'bookmarks';
+            if (filterLevelId != null && filterLevelId.isNotEmpty) {
+              finalTopicId += '_level:$filterLevelId';
+            }
+            if (filterTopicId != null && filterTopicId.isNotEmpty) {
+              finalTopicId += '_topic:$filterTopicId';
+            }
+          }
+          
+          return TopicFlashcardScreen(topicId: finalTopicId, topicName: topicName);
         },
       ),
 
@@ -163,6 +183,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteConstants.gameStats,
         builder: (context, state) => const GameStatsScreen(),
+      ),
+      GoRoute(
+        path: RouteConstants.progressWords,
+        builder: (context, state) {
+          final type = state.uri.queryParameters['type'] ?? 'mastered';
+          final title = state.uri.queryParameters['title'] ?? 'Từ vựng';
+          final levelId = state.uri.queryParameters['levelId'];
+          final topicId = state.uri.queryParameters['topicId'];
+          return ProgressWordsScreen(
+            type: type,
+            title: title,
+            levelId: levelId,
+            topicId: topicId,
+          );
+        },
       ),
       // --- Admin Routes ---
       GoRoute(

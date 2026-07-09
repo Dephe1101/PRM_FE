@@ -15,13 +15,16 @@ class ProgressController extends AsyncNotifier<FlashcardStatsModel> {
 
   @override
   FutureOr<FlashcardStatsModel> build() async {
-    _repository = ref.read(flashcardRepositoryProvider);
+    _repository = ref.watch(flashcardRepositoryProvider);
     ref.listen(authControllerProvider, (previous, next) {
       if (previous?.isLoggedIn == true && next.isLoggedIn == false) {
         ref.invalidateSelf();
       }
     });
 
+    // Sử dụng ref.read thay vì ref.watch để tránh bị rebuild liên tục
+    // mỗi khi ProgressFilterController cập nhật trạng thái isLoading hay danh sách levels.
+    // UI đã tự xử lý gọi refreshProgress() khi người dùng thay đổi dropdown.
     final filter = ref.read(progressFilterControllerProvider);
     return _fetchProgress(filter.selectedLevelId, filter.selectedTopicId);
   }

@@ -32,7 +32,7 @@ class _TopicFlashcardScreenState extends ConsumerState<TopicFlashcardScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(topicFlashcardControllerProvider(widget.topicId));
     // Dùng ref.listen thay vì ref.watch để giữ Provider sống mà KHÔNG làm rebuild lại UI
-    ref.listen(batchFlashcardActionProvider, (_, __) {});
+    ref.listen(batchFlashcardActionProvider, (_, _) {});
 
     return Scaffold(
       backgroundColor: AppColors.background,

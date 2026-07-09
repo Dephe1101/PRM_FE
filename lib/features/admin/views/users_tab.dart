@@ -235,7 +235,7 @@ class _UsersTabState extends ConsumerState<UsersTab> {
         // User List
         Expanded(
           child: usersState.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const SizedBox.shrink(),
             error: (error, _) => ErrorRetryWidget(
               errorMessage: error.toString(),
               onRetry: () => ref.read(userControllerProvider.notifier).refresh(),

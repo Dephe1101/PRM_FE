@@ -102,7 +102,11 @@ class _TopicImportDialogState extends State<TopicImportDialog> {
     }
 
     if (_parsedWords == null || _parsedWords!.isEmpty) {
-      ToastUtil.showSnackBar(context, 'Vui lòng chọn file Excel hợp lệ', isError: true);
+      ToastUtil.showSnackBar(
+        context,
+        'Vui lòng chọn file Excel hợp lệ',
+        isError: true,
+      );
       return;
     }
 
@@ -123,7 +127,9 @@ class _TopicImportDialogState extends State<TopicImportDialog> {
       }
     } catch (e) {
       if (mounted) {
-        final errorMessage = e is AppException ? e.message : 'Đã xảy ra lỗi: $e';
+        final errorMessage = e is AppException
+            ? e.message
+            : 'Đã xảy ra lỗi: $e';
         ToastUtil.showSnackBar(context, errorMessage, isError: true);
       }
     } finally {
@@ -245,6 +251,7 @@ class _TopicImportDialogState extends State<TopicImportDialog> {
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         initialValue: _selectedLevelId,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Chọn Level',
                           border: OutlineInputBorder(),
@@ -253,7 +260,10 @@ class _TopicImportDialogState extends State<TopicImportDialog> {
                             widget.levels?.map((level) {
                               return DropdownMenuItem(
                                 value: level.id,
-                                child: Text(level.name),
+                                child: Text(
+                                  level.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList() ??
                             [],
@@ -294,6 +304,7 @@ class _TopicImportDialogState extends State<TopicImportDialog> {
                         else ...[
                           DropdownButtonFormField<String?>(
                             initialValue: _selectedTopicId,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Chọn Topic',
                               border: OutlineInputBorder(),
@@ -301,7 +312,10 @@ class _TopicImportDialogState extends State<TopicImportDialog> {
                             items: _filteredTopics.map((t) {
                               return DropdownMenuItem(
                                 value: t.id,
-                                child: Text(t.title),
+                                child: Text(
+                                  t.title,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) {

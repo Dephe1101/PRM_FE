@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/auth/controllers/auth_controller.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_text_styles.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobile/core/constants/route_constants.dart';
 import 'package:mobile/features/admin/views/users_tab.dart';
 import 'package:mobile/features/admin/views/levels_tab.dart';
 import 'package:mobile/features/admin/views/topics_tab.dart';
@@ -51,7 +53,7 @@ class _MainAdminScaffoldState extends ConsumerState<MainAdminScaffold> {
             ),
             onSelected: (value) async {
               if (value == 'profile') {
-                // Navigate to profile
+                context.push(RouteConstants.profile);
               } else if (value == 'logout') {
                 await ref.read(authControllerProvider.notifier).logout();
               }

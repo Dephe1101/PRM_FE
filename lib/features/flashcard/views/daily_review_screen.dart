@@ -22,7 +22,7 @@ class _DailyReviewScreenState extends ConsumerState<DailyReviewScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(reviewControllerProvider);
     // Dùng ref.listen thay vì ref.watch để giữ Provider sống mà KHÔNG làm rebuild lại UI
-    ref.listen(batchFlashcardActionProvider, (_, __) {});
+    ref.listen(batchFlashcardActionProvider, (_, _) {});
 
     return Scaffold(
       backgroundColor: AppColors.background,

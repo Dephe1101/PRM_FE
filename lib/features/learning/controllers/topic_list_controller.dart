@@ -80,9 +80,7 @@ class TopicListController extends Notifier<TopicListState> {
       if (state.selectedLevelId == levelId) {
         state = state.copyWith(topics: topics, isLoadingTopics: false);
       }
-    } catch (e, st) {
-      print('fetchTopics error: $e');
-      print(st);
+    } catch (e, _) {
       if (state.selectedLevelId == levelId) {
         state = state.copyWith(isLoadingTopics: false, error: e.toString());
       }

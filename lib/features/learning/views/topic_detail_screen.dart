@@ -50,7 +50,7 @@ class TopicDetailScreen extends ConsumerWidget {
             style: AppTextStyles.h2.copyWith(color: AppColors.brandDark),
           ),
           loading: () => const Text('Đang tải...'),
-          error: (_, __) => const Text('Lỗi'),
+          error: (_, _) => const Text('Lỗi'),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -106,53 +106,69 @@ class TopicDetailScreen extends ConsumerWidget {
                       ),
               ),
               // Nút Học Flashcard to bự ở dưới cùng
-              if (allWords.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -4),
+              Builder(
+                builder: (context) {
+                  final bool hasWordsToStudy = selectedTab == 0
+                      ? allWords.isNotEmpty
+                      : bookmarkedState.maybeWhen(
+                          data: (flashcards) => flashcards.isNotEmpty,
+                          orElse: () => false,
+                        );
+
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: hasWordsToStudy
+                          ? () {
+                              // Chuyển hướng sang màn hình Flashcard
+                              if (selectedTab == 1) {
+                                // Truyền thêm param cho bookmarks
+                                context.push(
+                                  Uri(
+                                    path: '/flashcard/bookmarks',
+                                    queryParameters: {'topicName': topicName, 'filterTopicId': topicId},
+                                  ).toString(),
+                                );
+                              } else {
+                                context.push(
+                                  Uri(
+                                    path: RouteConstants.flashcard.replaceFirst(':topicId', topicId),
+                                    queryParameters: {'topicName': topicName},
+                                  ).toString(),
+                                );
+                              }
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandDark,
+                        foregroundColor: AppColors.surface,
+                        disabledBackgroundColor: AppColors.border,
+                        disabledForegroundColor: AppColors.textSecondary,
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Chuyển hướng sang màn hình Flashcard
-                      if (selectedTab == 1) {
-                         // Truyền thêm param cho bookmarks
-                         context.push(
-                          Uri(
-                            path: '/flashcard/bookmarks',
-                            queryParameters: {'topicName': topicName, 'topicId': topicId},
-                          ).toString(),
-                        );
-                      } else {
-                        context.push(
-                          Uri(
-                            path: RouteConstants.flashcard.replaceFirst(':topicId', topicId),
-                            queryParameters: {'topicName': topicName},
-                          ).toString(),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.brandDark,
-                      foregroundColor: AppColors.surface,
-                      minimumSize: const Size(double.infinity, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      child: Text(
+                        selectedTab == 0 ? 'Bắt đầu học Flashcard' : 'Ôn tập từ đã lưu',
+                        style: AppTextStyles.h3.copyWith(
+                          color: hasWordsToStudy ? AppColors.surface : AppColors.textSecondary,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      selectedTab == 0 ? 'Bắt đầu học Flashcard' : 'Ôn tập từ đã lưu',
-                      style: AppTextStyles.h3.copyWith(color: AppColors.surface),
-                    ),
-                  ),
-                ),
+                  );
+                },
+              ),
             ],
           );
         },
@@ -200,7 +216,7 @@ class TopicDetailScreen extends ConsumerWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(20),
       itemCount: words.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final word = words[index];
         return _buildWordItem(
@@ -224,7 +240,7 @@ class TopicDetailScreen extends ConsumerWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(20),
       itemCount: flashcards.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final word = flashcards[index].word;
         return _buildWordItem(

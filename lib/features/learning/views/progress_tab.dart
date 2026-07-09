@@ -5,7 +5,6 @@ import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/widgets/error_retry_widget.dart';
 import 'package:mobile/features/flashcard/controllers/progress_controller.dart';
 import 'package:mobile/features/flashcard/controllers/progress_filter_controller.dart';
-import 'package:mobile/features/flashcard/models/flashcard_model.dart';
 
 class ProgressTab extends ConsumerWidget {
   const ProgressTab({super.key});
@@ -144,11 +143,6 @@ class ProgressTab extends ConsumerWidget {
                                 icon: Icons.check_circle_outline,
                                 color: AppColors.accentMastered,
                                 bgColor: AppColors.accentMasteredTrack,
-                                onTap: () => _showWordsDialog(
-                                  context,
-                                  'Từ vựng đã thuộc',
-                                  stats.masteredWords,
-                                ),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -159,11 +153,6 @@ class ProgressTab extends ConsumerWidget {
                                 icon: Icons.book_outlined,
                                 color: AppColors.brandDark,
                                 bgColor: AppColors.surfacePink,
-                                onTap: () => _showWordsDialog(
-                                  context,
-                                  'Từ vựng chưa thuộc',
-                                  stats.learningWords,
-                                ),
                               ),
                             ),
                           ],
@@ -336,87 +325,5 @@ class ProgressTab extends ConsumerWidget {
       ),
     );
   }
-
-  void _showWordsDialog(
-    BuildContext context,
-    String title,
-    List<dynamic> words,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: AppColors.surface,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            constraints: const BoxConstraints(maxHeight: 500),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.h3.copyWith(
-                        color: AppColors.brandDark,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (words.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    child: Text(
-                      'Không có từ vựng nào.',
-                      style: AppTextStyles.bodyText.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: words.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final w = words[index];
-                        // words is List<FlashcardModel>; word data is in w.word
-                        final word = (w is FlashcardModel) ? w.word : w;
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 0,
-                          ),
-                          title: Text(
-                            word.kanji.isNotEmpty ? word.kanji : word.hiragana,
-                            style: AppTextStyles.bodyText.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '${word.hiragana} - ${word.meaning}',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
+

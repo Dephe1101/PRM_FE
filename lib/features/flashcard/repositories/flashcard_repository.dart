@@ -35,7 +35,7 @@ class FlashcardRepository {
       final payload = {
         'wordId': wordId,
         'isCorrect': isCorrect,
-        if (timeSpent != null) 'timeSpent': timeSpent,
+        'timeSpent': ?timeSpent,
       };
       final response = await _dio.post('/flashcards/submit', data: payload);
       return FlashcardModel.fromJson(response.data['data']);
@@ -62,11 +62,18 @@ class FlashcardRepository {
     }
   }
 
-  Future<FlashcardStatsModel> getProgress({String? levelId, String? topicId}) async {
+  Future<FlashcardStatsModel> getProgress({
+    String? levelId,
+    String? topicId,
+  }) async {
     try {
       final queryParameters = <String, dynamic>{};
-      if (levelId != null && levelId != 'All') queryParameters['levelId'] = levelId;
-      if (topicId != null && topicId != 'All') queryParameters['topicId'] = topicId;
+      if (levelId != null && levelId != 'All') {
+        queryParameters['levelId'] = levelId;
+      }
+      if (topicId != null && topicId != 'All') {
+        queryParameters['topicId'] = topicId;
+      }
 
       final response = await _dio.get(
         '/flashcards/progress',
@@ -93,8 +100,12 @@ class FlashcardRepository {
         'page': page,
         'limit': limit,
       };
-      if (levelId != null && levelId != 'All') queryParameters['levelId'] = levelId;
-      if (topicId != null && topicId != 'All') queryParameters['topicId'] = topicId;
+      if (levelId != null && levelId != 'All') {
+        queryParameters['levelId'] = levelId;
+      }
+      if (topicId != null && topicId != 'All') {
+        queryParameters['topicId'] = topicId;
+      }
 
       final response = await _dio.get(
         '/flashcards/progress',
@@ -103,15 +114,31 @@ class FlashcardRepository {
       final data = response.data['data'] as Map<String, dynamic>;
       // Extract the correct field based on type
       final key = type == 'mastered' ? 'masteredWords' : 'learningWords';
-      return ProgressWordPageModel.fromJson(data[key] as Map<String, dynamic>? ?? {});
+      return ProgressWordPageModel.fromJson(
+        data[key] as Map<String, dynamic>? ?? {},
+      );
     } catch (e) {
       throw ApiErrorHandler.handle(e);
     }
   }
 
-  Future<List<FlashcardModel>> getBookmarks() async {
+  Future<List<FlashcardModel>> getBookmarks({
+    String? levelId,
+    String? topicId,
+  }) async {
     try {
-      final response = await _dio.get('/flashcards/bookmarks');
+      final queryParameters = <String, dynamic>{};
+      if (levelId != null && levelId != 'All') {
+        queryParameters['levelId'] = levelId;
+      }
+      if (topicId != null && topicId != 'All') {
+        queryParameters['topicId'] = topicId;
+      }
+
+      final response = await _dio.get(
+        '/flashcards/bookmarks',
+        queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
+      );
       final data = response.data['data'] as List;
       return data.map((json) => FlashcardModel.fromJson(json)).toList();
     } catch (e) {
@@ -119,9 +146,23 @@ class FlashcardRepository {
     }
   }
 
-  Future<List<FlashcardModel>> getBookmarksStudy() async {
+  Future<List<FlashcardModel>> getBookmarksStudy({
+    String? topicId,
+    String? levelId,
+  }) async {
     try {
-      final response = await _dio.get('/flashcards/bookmarks/study');
+      final queryParameters = <String, dynamic>{};
+      if (topicId != null && topicId != 'All') {
+        queryParameters['topicId'] = topicId;
+      }
+      if (levelId != null && levelId != 'All') {
+        queryParameters['levelId'] = levelId;
+      }
+
+      final response = await _dio.get(
+        '/flashcards/bookmarks/study',
+        queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
+      );
       final data = response.data['data']['flashcards'] as List;
       return data.map((json) => FlashcardModel.fromJson(json)).toList();
     } catch (e) {
@@ -138,7 +179,9 @@ class FlashcardRepository {
     }
   }
 
-  Future<List<FlashcardModel>> getBookmarkedFlashcardsByTopic(String topicId) async {
+  Future<List<FlashcardModel>> getBookmarkedFlashcardsByTopic(
+    String topicId,
+  ) async {
     try {
       final response = await _dio.get('/flashcards/topics/$topicId/bookmarks');
       final data = response.data['data']['flashcards'] as List;
