@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/constants/route_constants.dart';
+import 'package:mobile/features/gamification/controllers/falling_word_controller.dart';
 import 'package:mobile/features/gamification/controllers/game_filter_controller.dart';
 
 class GameTab extends ConsumerWidget {
@@ -13,13 +14,23 @@ class GameTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filterState = ref.watch(gameFilterControllerProvider);
     final filterNotifier = ref.read(gameFilterControllerProvider.notifier);
-    
+    final gamePointsState = ref.watch(fallingWordControllerProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          'Trò chơi',
-          style: AppTextStyles.h2.copyWith(color: AppColors.brandDark),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Trò chơi',
+              style: AppTextStyles.h2.copyWith(color: AppColors.brandDark),
+            ),
+            Text(
+              'Điểm tích lũy: ${gamePointsState.totalPoints}',
+              style: AppTextStyles.caption.copyWith(color: AppColors.brandDark),
+            ),
+          ],
         ),
         backgroundColor: AppColors.surface,
         elevation: 0,
@@ -103,7 +114,24 @@ class GameTab extends ConsumerWidget {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildDifficultyButton(
+                            'Dễ',
+                            GameDifficulty.easy,
+                            ref,
+                          ),
+                          const SizedBox(width: 16),
+                          _buildDifficultyButton(
+                            'Địa ngục',
+                            GameDifficulty.hell,
+                            ref,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -122,8 +150,9 @@ class GameTab extends ConsumerWidget {
                                   final topicIdsParam = filterState
                                       .selectedTopicIds
                                       .join(',');
+                                  final difficulty = ref.read(fallingWordControllerProvider).difficulty.name;
                                   context.push(
-                                    '/falling-word?topicIds=$topicIdsParam',
+                                    '/falling-word?topicIds=$topicIdsParam&difficulty=$difficulty',
                                   );
                                 },
                           icon: const Icon(
@@ -148,6 +177,39 @@ class GameTab extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDifficultyButton(
+    String label,
+    GameDifficulty difficulty,
+    WidgetRef ref,
+  ) {
+    final currentDifficulty = ref.watch(fallingWordControllerProvider).difficulty;
+    final isSelected = currentDifficulty == difficulty;
+
+    return InkWell(
+      onTap: () {
+        ref.read(fallingWordControllerProvider.notifier).state =
+            ref.read(fallingWordControllerProvider).copyWith(difficulty: difficulty);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.brandDark : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.brandDark : AppColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.h3.copyWith(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }

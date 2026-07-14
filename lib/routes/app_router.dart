@@ -17,6 +17,7 @@ import 'package:mobile/features/flashcard/views/topic_flashcard_screen.dart';
 
 import 'package:mobile/features/flashcard/views/my_words_screen.dart';
 import 'package:mobile/features/gamification/views/falling_word_game_screen.dart';
+import 'package:mobile/features/gamification/controllers/falling_word_controller.dart';
 import 'package:mobile/features/gamification/views/leaderboard_screen.dart';
 import 'package:mobile/features/gamification/views/game_history_screen.dart';
 import 'package:mobile/features/gamification/views/game_stats_screen.dart';
@@ -165,11 +166,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: RouteConstants.fallingWord,
         builder: (context, state) {
           final topicIdsStr = state.uri.queryParameters['topicIds'] ?? '';
+          final difficultyStr = state.uri.queryParameters['difficulty'] ?? 'easy';
+          
           final topicIds = topicIdsStr
               .split(',')
               .where((id) => id.isNotEmpty)
               .toList();
-          return FallingWordGameScreen(topicIds: topicIds);
+          
+          final difficulty = difficultyStr == 'hell' 
+              ? GameDifficulty.hell 
+              : GameDifficulty.easy;
+              
+          return FallingWordGameScreen(
+            topicIds: topicIds,
+            difficulty: difficulty,
+          );
         },
       ),
       GoRoute(

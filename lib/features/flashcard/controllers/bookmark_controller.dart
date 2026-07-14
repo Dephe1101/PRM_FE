@@ -31,25 +31,76 @@ class BookmarkController extends AsyncNotifier<List<FlashcardModel>> {
     final previousState = state;
     if (state.hasValue) {
       final currentList = state.value!;
-      // Nếu có trong list, toggle sẽ làm mất nó khỏi list Bookmark.
-      // Nếu muốn giữ trong list nhưng tắt tim, ta cần cập nhật trạng thái isBookmarked.
-      // Thường màn hình My Words, nếu bỏ tim thì nó sẽ biến mất khỏi danh sách.
       final newList = currentList.where((f) => f.word.id != wordId).toList();
       state = AsyncValue.data(newList);
     }
 
     try {
       final isBookmarked = await _repository.toggleBookmark(wordId);
-      // Nếu API trả về true (nghĩa là bookmarked), nhưng ta lại vừa xoá khỏi list,
-      // thì phải rollback hoặc fetch lại.
-      // Thường ở màn hình Bookmark, toggle là xoá, nên isBookmarked sẽ là false.
       if (isBookmarked) {
-        // Rollback nếu có lỗi logic
+        // Rollback if it was supposed to be removed
         state = previousState;
         ref.invalidateSelf();
       }
     } catch (e) {
-      // Revert
+      state = previousState;
+    }
+  }
+
+  Future<void> unsaveAll() async {
+    if (!state.hasValue) return;
+    final currentList = state.value!;
+    if (currentList.isEmpty) return;
+
+    final previousState = state;
+    state = const AsyncValue.data([]);
+
+    try {
+      await Future.wait(
+        currentList.map((f) => _repository.toggleBookmark(f.word.id)),
+      );
+    } catch (e) {
+      state = previousState;
+    }
+  }
+
+  Future<void> unsaveTopic(List<FlashcardModel> flashcards) async {
+    final previousState = state;
+    if (state.hasValue) {
+      final idsToRemove = flashcards.map((f) => f.word.id).toSet();
+      final newList =
+          state.value!.where((f) => !idsToRemove.contains(f.word.id)).toList();
+      state = AsyncValue.data(newList);
+    }
+
+    try {
+      await Future.wait(
+        flashcards.map((f) => _repository.toggleBookmark(f.word.id)),
+      );
+      ref.invalidateSelf();
+    } catch (e) {
+      state = previousState;
+    }
+  }
+
+  Future<void> saveAll(String topicId) async {
+    final previousState = state;
+    state = const AsyncValue.loading();
+
+    try {
+      final allWordsInTopic = await _repository.getFlashcardsByTopic(topicId);
+      final List<Future> futures = [];
+      for (var f in allWordsInTopic) {
+        if (!f.progress.isBookmarked) {
+          futures.add(_repository.toggleBookmark(f.word.id));
+        }
+      }
+
+      if (futures.isNotEmpty) {
+        await Future.wait(futures);
+      }
+      ref.invalidateSelf();
+    } catch (e) {
       state = previousState;
     }
   }

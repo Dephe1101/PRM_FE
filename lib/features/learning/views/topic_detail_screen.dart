@@ -7,6 +7,7 @@ import 'package:mobile/core/theme/app_text_styles.dart';
 import 'package:mobile/core/widgets/error_retry_widget.dart';
 import 'package:mobile/features/learning/controllers/topic_detail_controller.dart';
 import 'package:mobile/features/flashcard/models/flashcard_model.dart';
+import 'package:mobile/features/flashcard/controllers/bookmark_controller.dart';
 
 class _StudyTabNotifier extends Notifier<int> {
   @override
@@ -17,22 +18,22 @@ class _StudyTabNotifier extends Notifier<int> {
   }
 }
 
-final _studyTabProvider = NotifierProvider.autoDispose<_StudyTabNotifier, int>(() {
-  return _StudyTabNotifier();
-});
+final _studyTabProvider =
+    NotifierProvider.autoDispose<_StudyTabNotifier, int>(() {
+      return _StudyTabNotifier();
+    });
 
 class TopicDetailScreen extends ConsumerWidget {
   final String topicId;
 
-  const TopicDetailScreen({
-    super.key,
-    required this.topicId,
-  });
+  const TopicDetailScreen({super.key, required this.topicId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(topicDetailControllerProvider(topicId));
-    final bookmarkedState = ref.watch(topicBookmarkedFlashcardsProvider(topicId));
+    final bookmarkedState = ref.watch(
+      topicBookmarkedFlashcardsProvider(topicId),
+    );
     final selectedTab = ref.watch(_studyTabProvider);
 
     return Scaffold(
@@ -45,14 +46,56 @@ class TopicDetailScreen extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
         title: state.when(
-          data: (data) => Text(
-            data['data']['title'] ?? 'Chi tiết chủ đề',
-            style: AppTextStyles.h2.copyWith(color: AppColors.brandDark),
-          ),
+          data:
+              (data) => Text(
+                data['data']['title'] ?? 'Chi tiết chủ đề',
+                style: AppTextStyles.h2.copyWith(color: AppColors.brandDark),
+              ),
           loading: () => const Text('Đang tải...'),
           error: (_, _) => const Text('Lỗi'),
         ),
         centerTitle: true,
+        actions: [
+          state.maybeWhen(
+            data:
+                (response) => PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: AppColors.brandDark),
+                  onSelected: (value) {
+                    if (value == 'save_all') {
+                      ref
+                          .read(bookmarkControllerProvider.notifier)
+                          .saveAll(topicId);
+                    } else if (value == 'unsave_all') {
+                      _showUnsaveAllTopicDialog(context, ref);
+                    }
+                  },
+                  itemBuilder:
+                      (context) => [
+                        const PopupMenuItem(
+                          value: 'save_all',
+                          child: Row(
+                            children: [
+                              Icon(Icons.bookmark_add, color: AppColors.primary),
+                              SizedBox(width: 8),
+                              Text('Lưu tất cả'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'unsave_all',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_sweep, color: AppColors.error),
+                              SizedBox(width: 8),
+                              Text('Bỏ lưu tất cả'),
+                            ],
+                          ),
+                        ),
+                      ],
+                ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(color: AppColors.border, height: 1),
@@ -68,7 +111,10 @@ class TopicDetailScreen extends ConsumerWidget {
               // Segmented Control (Tabs)
               Container(
                 color: AppColors.surface,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -76,7 +122,8 @@ class TopicDetailScreen extends ConsumerWidget {
                         context,
                         title: 'Toàn bộ',
                         isSelected: selectedTab == 0,
-                        onTap: () => ref.read(_studyTabProvider.notifier).setTab(0),
+                        onTap:
+                            () => ref.read(_studyTabProvider.notifier).setTab(0),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -85,35 +132,46 @@ class TopicDetailScreen extends ConsumerWidget {
                         context,
                         title: 'Đã lưu',
                         isSelected: selectedTab == 1,
-                        onTap: () => ref.read(_studyTabProvider.notifier).setTab(1),
+                        onTap:
+                            () => ref.read(_studyTabProvider.notifier).setTab(1),
                       ),
                     ),
                   ],
                 ),
               ),
               Expanded(
-                child: selectedTab == 0
-                    ? _buildAllWordsList(allWords)
-                    : bookmarkedState.when(
-                        data: (flashcards) => _buildBookmarkedWordsList(flashcards),
-                        loading: () => const Center(child: SizedBox.shrink()),
-                        error: (e, st) => Center(
-                          child: ErrorRetryWidget(
-                            errorMessage: 'Lỗi tải từ đã lưu: $e',
-                            onRetry: () => ref.invalidate(topicBookmarkedFlashcardsProvider(topicId)),
-                          ),
+                child:
+                    selectedTab == 0
+                        ? _buildAllWordsList(allWords)
+                        : bookmarkedState.when(
+                          data:
+                              (flashcards) =>
+                                  _buildBookmarkedWordsList(flashcards),
+                          loading: () => const Center(child: SizedBox.shrink()),
+                          error:
+                              (e, st) => Center(
+                                child: ErrorRetryWidget(
+                                  errorMessage: 'Lỗi tải từ đã lưu: $e',
+                                  onRetry:
+                                      () => ref.invalidate(
+                                        topicBookmarkedFlashcardsProvider(
+                                          topicId,
+                                        ),
+                                      ),
+                                ),
+                              ),
                         ),
-                      ),
               ),
               // Nút Học Flashcard to bự ở dưới cùng
               Builder(
                 builder: (context) {
-                  final bool hasWordsToStudy = selectedTab == 0
-                      ? allWords.isNotEmpty
-                      : bookmarkedState.maybeWhen(
-                          data: (flashcards) => flashcards.isNotEmpty,
-                          orElse: () => false,
-                        );
+                  final bool hasWordsToStudy =
+                      selectedTab == 0
+                          ? allWords.isNotEmpty
+                          : bookmarkedState.maybeWhen(
+                            data: (flashcards) => flashcards.isNotEmpty,
+                            orElse: () => false,
+                          );
 
                   return Container(
                     padding: const EdgeInsets.all(20),
@@ -128,27 +186,32 @@ class TopicDetailScreen extends ConsumerWidget {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: hasWordsToStudy
-                          ? () {
-                              // Chuyển hướng sang màn hình Flashcard
-                              if (selectedTab == 1) {
-                                // Truyền thêm param cho bookmarks
-                                context.push(
-                                  Uri(
-                                    path: '/flashcard/bookmarks',
-                                    queryParameters: {'topicName': topicName, 'filterTopicId': topicId},
-                                  ).toString(),
-                                );
-                              } else {
-                                context.push(
-                                  Uri(
-                                    path: RouteConstants.flashcard.replaceFirst(':topicId', topicId),
-                                    queryParameters: {'topicName': topicName},
-                                  ).toString(),
-                                );
+                      onPressed:
+                          hasWordsToStudy
+                              ? () {
+                                // Chuyển hướng sang màn hình Flashcard
+                                if (selectedTab == 1) {
+                                  // Truyền thêm param cho bookmarks
+                                  context.push(
+                                    Uri(
+                                      path: '/flashcard/bookmarks',
+                                      queryParameters: {
+                                        'topicName': topicName,
+                                        'filterTopicId': topicId,
+                                      },
+                                    ).toString(),
+                                  );
+                                } else {
+                                  context.push(
+                                    Uri(
+                                      path: RouteConstants.flashcard
+                                          .replaceFirst(':topicId', topicId),
+                                      queryParameters: {'topicName': topicName},
+                                    ).toString(),
+                                  );
+                                }
                               }
-                            }
-                          : null,
+                              : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.brandDark,
                         foregroundColor: AppColors.surface,
@@ -160,9 +223,14 @@ class TopicDetailScreen extends ConsumerWidget {
                         ),
                       ),
                       child: Text(
-                        selectedTab == 0 ? 'Bắt đầu học Flashcard' : 'Ôn tập từ đã lưu',
+                        selectedTab == 0
+                            ? 'Bắt đầu học Flashcard'
+                            : 'Ôn tập từ đã lưu',
                         style: AppTextStyles.h3.copyWith(
-                          color: hasWordsToStudy ? AppColors.surface : AppColors.textSecondary,
+                          color:
+                              hasWordsToStudy
+                                  ? AppColors.surface
+                                  : AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -173,17 +241,61 @@ class TopicDetailScreen extends ConsumerWidget {
           );
         },
         loading: () => const SizedBox.shrink(),
-        error: (e, st) => Center(
-          child: ErrorRetryWidget(
-            errorMessage: 'Lỗi tải chi tiết: $e',
-            onRetry: () => ref.invalidate(topicDetailControllerProvider(topicId)),
-          ),
-        ),
+        error:
+            (e, st) => Center(
+              child: ErrorRetryWidget(
+                errorMessage: 'Lỗi tải chi tiết: $e',
+                onRetry:
+                    () => ref.invalidate(topicDetailControllerProvider(topicId)),
+              ),
+            ),
       ),
     );
   }
 
-  Widget _buildTabButton(BuildContext context, {required String title, required bool isSelected, required VoidCallback onTap}) {
+  void _showUnsaveAllTopicDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bỏ lưu tất cả?'),
+        content: const Text(
+          'Bạn có chắc chắn muốn bỏ lưu tất cả các từ trong chủ đề này không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final bookmarkedFlashcards = ref.read(
+                topicBookmarkedFlashcardsProvider(topicId),
+              );
+              bookmarkedFlashcards.whenData((flashcards) {
+                if (flashcards.isNotEmpty) {
+                  ref
+                      .read(bookmarkControllerProvider.notifier)
+                      .unsaveTopic(flashcards);
+                }
+              });
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Bỏ lưu',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(
+    BuildContext context, {
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -191,7 +303,9 @@ class TopicDetailScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.brandDark : AppColors.background,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AppColors.brandDark : AppColors.border),
+          border: Border.all(
+            color: isSelected ? AppColors.brandDark : AppColors.border,
+          ),
         ),
         alignment: Alignment.center,
         child: Text(
@@ -285,10 +399,7 @@ class TopicDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  meaning ?? '',
-                  style: AppTextStyles.bodyText,
-                ),
+                Text(meaning ?? '', style: AppTextStyles.bodyText),
               ],
             ),
           ),
